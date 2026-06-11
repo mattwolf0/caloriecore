@@ -1,0 +1,59 @@
+# Gradle / Kotlin output
+.gradle/
+.kotlin/
+build/
+**/build/
+
+# Local IDE state
+.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+*.iml
+
+# Local machine config
+local.properties
+/local.properties
+*.properties.local
+
+# Android native/build artifacts
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.aab
+*.dex
+*.idsig
+
+# Profiles and logs
+*.hprof
+*.prof
+*.trace
+*.log
+
+# Signing material and secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+keystore.properties
+signing.properties
+.env
+.env.*
+
+# Local databases and scratch files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+gradle/gradle-daemon-jvm.properties
