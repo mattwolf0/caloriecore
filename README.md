@@ -7,7 +7,7 @@ The app keeps its data in a local SQLite database on the phone. There is no acco
 ## Main Features
 
 - Food entries with calories and macros
-- Barcode scan and OpenFoodFacts lookup
+- Barcode scan with Open Food Facts lookup and a public Calorie API fallback
 - Body weight, sleep, steps, and activity inputs
 - Training plans and workout logs
 - Daily summary and simple progress charts

@@ -25,11 +25,11 @@ internal data class FoodDraft(
     val protein: String = "",
     val carbs: String = "",
     val fat: String = "",
-    val keepsOffPer100Base: Boolean = false,
-    val productKcalPer100g: Double = 0.0,
-    val productProteinPer100g: Double = 0.0,
-    val productCarbsPer100g: Double = 0.0,
-    val productFatPer100g: Double = 0.0,
+    val keepsProductPer100Base: Boolean = false,
+    val productKcalPer100g: Double? = null,
+    val productProteinPer100g: Double? = null,
+    val productCarbsPer100g: Double? = null,
+    val productFatPer100g: Double? = null,
     val offSearchText: String = ""
 )
 
@@ -88,22 +88,24 @@ internal class FoodEditorState internal constructor(
         hideOffShelf()
     }
 
-    fun useOffProduct(offFood: FoodProduct, loadedMessage: String) {
+    fun useLookupProduct(food: FoodProduct, loadedMessage: String) {
         draft = FoodDraft(
             mealBeingEditedId = draft.mealBeingEditedId,
             mealLoggedAt = draft.mealLoggedAt,
-            name = offFood.name,
-            barcode = offFood.code,
+            name = food.name,
+            barcode = food.code,
             grams = "100",
-            kcal = offFood.kcalPer100g.toString(),
-            protein = CalorieCoreFormatter.logDecimal(offFood.proteinPer100g),
-            carbs = CalorieCoreFormatter.logDecimal(offFood.carbsPer100g),
-            fat = CalorieCoreFormatter.logDecimal(offFood.fatPer100g),
-            keepsOffPer100Base = true,
-            productKcalPer100g = offFood.kcalPer100g.toDouble(),
-            productProteinPer100g = offFood.proteinPer100g,
-            productCarbsPer100g = offFood.carbsPer100g,
-            productFatPer100g = offFood.fatPer100g
+            kcal = food.kcalPer100g?.toString().orEmpty(),
+            protein = macroText(food.proteinPer100g),
+            carbs = macroText(food.carbsPer100g),
+            fat = macroText(food.fatPer100g),
+            keepsProductPer100Base = food.kcalPer100g != null ||
+                food.proteinPer100g != null || food.carbsPer100g != null ||
+                food.fatPer100g != null,
+            productKcalPer100g = food.kcalPer100g?.toDouble(),
+            productProteinPer100g = food.proteinPer100g,
+            productCarbsPer100g = food.carbsPer100g,
+            productFatPer100g = food.fatPer100g
         )
         lookupNote = loadedMessage
         hideOffShelf()
@@ -113,7 +115,7 @@ internal class FoodEditorState internal constructor(
         draft = draft.copy(name = nextName)
         if (nextName.isBlank()) {
             lookupNote = null
-            draft = draft.copy(keepsOffPer100Base = false)
+            draft = draft.copy(keepsProductPer100Base = false)
             hideOffShelf()
         }
     }
@@ -136,42 +138,50 @@ internal class FoodEditorState internal constructor(
 
     fun updateCalories(nextCalories: String) {
         draft = draft.copy(
-            keepsOffPer100Base = false,
+            keepsProductPer100Base = false,
             kcal = keepLogNumberText(nextCalories)
         )
     }
 
     fun updateProtein(nextProtein: String) {
         draft = draft.copy(
-            keepsOffPer100Base = false,
+            keepsProductPer100Base = false,
             protein = keepLogNumberText(nextProtein, allowDecimal = true)
         )
     }
 
     fun updateCarbs(nextCarbs: String) {
         draft = draft.copy(
-            keepsOffPer100Base = false,
+            keepsProductPer100Base = false,
             carbs = keepLogNumberText(nextCarbs, allowDecimal = true)
         )
     }
 
     fun updateFat(nextFat: String) {
         draft = draft.copy(
-            keepsOffPer100Base = false,
+            keepsProductPer100Base = false,
             fat = keepLogNumberText(nextFat, allowDecimal = true)
         )
     }
 
     fun refreshProductTotals() {
-        if (!draft.keepsOffPer100Base) return
+        if (!draft.keepsProductPer100Base) return
         draft.grams.toIntOrNull()?.takeIf { it >= 0 }?.let { grams ->
-            // OFF values are per 100 g, so scale them by grams.
+            // Product values are per 100 g, so scale them by grams.
             val scale = grams / 100.0
             draft = draft.copy(
-                kcal = (draft.productKcalPer100g * scale).roundToInt().toString(),
-                protein = CalorieCoreFormatter.logDecimal(draft.productProteinPer100g * scale),
-                carbs = CalorieCoreFormatter.logDecimal(draft.productCarbsPer100g * scale),
-                fat = CalorieCoreFormatter.logDecimal(draft.productFatPer100g * scale)
+                kcal = draft.productKcalPer100g
+                    ?.let { (it * scale).roundToInt().toString() }
+                    .orEmpty(),
+                protein = draft.productProteinPer100g
+                    ?.let { CalorieCoreFormatter.logDecimal(it * scale) }
+                    .orEmpty(),
+                carbs = draft.productCarbsPer100g
+                    ?.let { CalorieCoreFormatter.logDecimal(it * scale) }
+                    .orEmpty(),
+                fat = draft.productFatPer100g
+                    ?.let { CalorieCoreFormatter.logDecimal(it * scale) }
+                    .orEmpty()
             )
         }
     }
@@ -203,11 +213,11 @@ private val FoodDraftStateSaver = listSaver<MutableState<FoodDraft>, Any>(
             draft.protein,
             draft.carbs,
             draft.fat,
-            draft.keepsOffPer100Base,
-            draft.productKcalPer100g,
-            draft.productProteinPer100g,
-            draft.productCarbsPer100g,
-            draft.productFatPer100g,
+            draft.keepsProductPer100Base,
+            draft.productKcalPer100g?.toString().orEmpty(),
+            draft.productProteinPer100g?.toString().orEmpty(),
+            draft.productCarbsPer100g?.toString().orEmpty(),
+            draft.productFatPer100g?.toString().orEmpty(),
             draft.offSearchText
         )
     },
@@ -223,11 +233,11 @@ private val FoodDraftStateSaver = listSaver<MutableState<FoodDraft>, Any>(
                 protein = values[7] as String,
                 carbs = values[8] as String,
                 fat = values[9] as String,
-                keepsOffPer100Base = values[10] as Boolean,
-                productKcalPer100g = values[11] as Double,
-                productProteinPer100g = values[12] as Double,
-                productCarbsPer100g = values[13] as Double,
-                productFatPer100g = values[14] as Double,
+                keepsProductPer100Base = values[10] as Boolean,
+                productKcalPer100g = (values[11] as String).toDoubleOrNull(),
+                productProteinPer100g = (values[12] as String).toDoubleOrNull(),
+                productCarbsPer100g = (values[13] as String).toDoubleOrNull(),
+                productFatPer100g = (values[14] as String).toDoubleOrNull(),
                 offSearchText = values[15] as String
             )
         )
@@ -251,4 +261,8 @@ internal fun rememberFoodEditorState(selectedDateTime: Long): FoodEditorState {
             offShelfState = offShelf
         )
     }
+}
+
+private fun macroText(value: Double?): String {
+    return if (value == null) "" else CalorieCoreFormatter.logDecimal(value)
 }

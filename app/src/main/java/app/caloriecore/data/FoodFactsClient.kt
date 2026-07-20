@@ -1,6 +1,7 @@
 package app.caloriecore.data
 
 import app.caloriecore.ui.model.FoodProduct
+import app.caloriecore.ui.model.withMissingMacrosFrom
 import java.net.HttpURLConnection
 import java.net.URLEncoder
 import java.net.URL
@@ -11,23 +12,48 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class FoodFactsClient {
+    private val calorieApi = CalorieApiClient()
+
     suspend fun lookupBarcode(barcode: String): Result<FoodProduct> {
         return withContext(Dispatchers.IO) {
             runCatching {
                 val code = barcode.filter(Char::isDigit)
                 require(code.isNotBlank()) { InvalidBarcode }
-
-                val json = getJson(
-                    "https://world.openfoodfacts.org/api/v3/product/$code" +
-                        "?fields=code,product_name,brands,quantity,nutriments"
-                )
-                if (json.optString("status") != "success") {
-                    error(NotFound)
-                }
-
-                parseFood(json.getJSONObject("product"), code)
+                lookupFood(code)
             }
         }
+    }
+
+    private suspend fun lookupFood(code: String): FoodProduct {
+        val openFood = try {
+            lookupOpenFoodFacts(code)
+        } catch (error: Exception) {
+            if (error.message != NotFound) throw error
+            null
+        }
+
+        if (openFood?.hasCompleteMacros == true) return openFood
+
+        val fallback = try {
+            calorieApi.lookupBarcode(code)
+        } catch (error: Exception) {
+            if (openFood != null) return openFood
+            throw error
+        }
+
+        return openFood?.withMissingMacrosFrom(fallback) ?: fallback
+    }
+
+    private fun lookupOpenFoodFacts(code: String): FoodProduct {
+        val json = getJson(
+            "https://world.openfoodfacts.org/api/v3/product/$code" +
+                "?fields=code,product_name,brands,quantity,nutriments"
+        )
+        if (json.optString("status") != "success") {
+            error(NotFound)
+        }
+
+        return parseFood(json.getJSONObject("product"), code)
     }
 
     suspend fun searchFoods(query: String): Result<List<FoodProduct>> {
@@ -116,20 +142,23 @@ class FoodFactsClient {
             code = product.optString("code").ifBlank { fallbackCode },
             name = name,
             servingGrams = servingFromQuantity(product.optString("quantity")),
-            kcalPer100g = kcalPer100g(nutriments).roundToInt(),
-            proteinPer100g = nutriments.optDouble("proteins_100g", 0.0),
-            carbsPer100g = nutriments.optDouble("carbohydrates_100g", 0.0),
-            fatPer100g = nutriments.optDouble("fat_100g", 0.0),
+            kcalPer100g = kcalPer100g(nutriments)?.roundToInt(),
+            proteinPer100g = nutriments.nonNegativeDoubleOrNull("proteins_100g"),
+            carbsPer100g = nutriments.nonNegativeDoubleOrNull("carbohydrates_100g"),
+            fatPer100g = nutriments.nonNegativeDoubleOrNull("fat_100g"),
             source = "openfoodfacts"
         )
     }
 
-    private fun kcalPer100g(nutriments: JSONObject): Double {
-        val kcal = nutriments.optDouble("energy-kcal_100g", Double.NaN)
-        if (!kcal.isNaN()) return kcal
+    private fun kcalPer100g(nutriments: JSONObject): Double? {
+        nutriments.nonNegativeDoubleOrNull("energy-kcal_100g")?.let { return it }
 
-        val kj = nutriments.optDouble("energy-kj_100g", Double.NaN)
-        return if (kj.isNaN()) 0.0 else kj / 4.184
+        return nutriments.nonNegativeDoubleOrNull("energy-kj_100g")?.div(4.184)
+    }
+
+    private fun JSONObject.nonNegativeDoubleOrNull(key: String): Double? {
+        if (!has(key) || isNull(key)) return null
+        return optDouble(key, Double.NaN).takeIf { it.isFinite() && it >= 0.0 }
     }
 
     private fun servingFromQuantity(quantity: String): Int {

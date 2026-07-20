@@ -54,7 +54,7 @@ fun FoodScreen(
 
     LaunchedEffect(
         editor.draft.grams,
-        editor.draft.keepsOffPer100Base,
+        editor.draft.keepsProductPer100Base,
         editor.draft.productKcalPer100g,
         editor.draft.productProteinPer100g,
         editor.draft.productCarbsPer100g,
@@ -68,7 +68,14 @@ fun FoodScreen(
             lookupBusy = true
             editor.lookupNote = null
             foodFacts.lookupBarcode(code)
-                .onSuccess { editor.useOffProduct(it, strings.productLoaded) }
+                .onSuccess { food ->
+                    val loadedMessage = if ("calorieapi" in food.source) {
+                        "${strings.productLoaded} · ${strings.calorieApiAttribution}"
+                    } else {
+                        strings.productLoaded
+                    }
+                    editor.useLookupProduct(food, loadedMessage)
+                }
                 .onFailure { error ->
                     editor.lookupNote = when (error.message) {
                         FoodFactsClient.InvalidBarcode -> strings.invalidBarcode
