@@ -7,12 +7,16 @@ data class FoodProduct(
     val code: String = "",
     val name: String,
     val servingGrams: Int = 100,
-    val kcalPer100g: Int = 0,
-    val proteinPer100g: Double = 0.0,
-    val carbsPer100g: Double = 0.0,
-    val fatPer100g: Double = 0.0,
+    val kcalPer100g: Int? = null,
+    val proteinPer100g: Double? = null,
+    val carbsPer100g: Double? = null,
+    val fatPer100g: Double? = null,
     val source: String = "manual"
 ) {
+    val hasCompleteMacros: Boolean
+        get() = kcalPer100g != null && proteinPer100g != null &&
+            carbsPer100g != null && fatPer100g != null
+
     fun toFoodEntry(loggedAt: Long, servingGrams: Int = this.servingGrams): FoodEntry {
         val eatenGrams = servingGrams.coerceAtLeast(0)
         val scale = eatenGrams / 100.0
@@ -21,12 +25,27 @@ data class FoodProduct(
             name = name,
             barcode = code,
             servingGrams = eatenGrams,
-            calories = (kcalPer100g * scale).roundToInt(),
-            proteinGrams = proteinPer100g * scale,
-            carbGrams = carbsPer100g * scale,
-            fatGrams = fatPer100g * scale
+            calories = ((kcalPer100g ?: 0) * scale).roundToInt(),
+            proteinGrams = (proteinPer100g ?: 0.0) * scale,
+            carbGrams = (carbsPer100g ?: 0.0) * scale,
+            fatGrams = (fatPer100g ?: 0.0) * scale
         )
     }
+}
+
+internal fun FoodProduct.withMissingMacrosFrom(fallback: FoodProduct): FoodProduct {
+    if (code.isNotBlank() && fallback.code.isNotBlank() && code != fallback.code) {
+        return this
+    }
+
+    return copy(
+        name = if (name == "Unknown product") fallback.name else name,
+        kcalPer100g = kcalPer100g ?: fallback.kcalPer100g,
+        proteinPer100g = proteinPer100g ?: fallback.proteinPer100g,
+        carbsPer100g = carbsPer100g ?: fallback.carbsPer100g,
+        fatPer100g = fatPer100g ?: fallback.fatPer100g,
+        source = "$source+${fallback.source}"
+    )
 }
 
 data class FoodEntry(

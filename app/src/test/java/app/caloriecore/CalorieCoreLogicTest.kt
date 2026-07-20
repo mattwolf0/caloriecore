@@ -17,6 +17,7 @@ import app.caloriecore.ui.model.sumPlateMacros
 import app.caloriecore.ui.model.mealsOnPhoneDay
 import app.caloriecore.ui.model.parseLogMoment
 import app.caloriecore.ui.model.startSheetFor
+import app.caloriecore.ui.model.withMissingMacrosFrom
 import app.caloriecore.ui.text.resolveCalorieCoreLanguage
 import java.util.Locale
 import org.junit.Assert.assertEquals
@@ -70,6 +71,52 @@ class CalorieCoreLogicTest {
         assertEquals(0, entry.servingGrams)
         assertEquals(0, entry.calories)
         assertEquals(0.0, entry.carbGrams, 0.0)
+    }
+
+    @Test
+    fun fillsOnlyMissingProductMacros() {
+        val primary = FoodProduct(
+            code = "123",
+            name = "Yogurt",
+            kcalPer100g = 80,
+            proteinPer100g = null,
+            carbsPer100g = 0.0,
+            fatPer100g = null,
+            source = "openfoodfacts"
+        )
+        val fallback = FoodProduct(
+            code = "123",
+            name = "Other name",
+            kcalPer100g = 999,
+            proteinPer100g = 9.0,
+            carbsPer100g = 50.0,
+            fatPer100g = 1.5,
+            source = "calorieapi"
+        )
+
+        val merged = primary.withMissingMacrosFrom(fallback)
+
+        assertEquals("Yogurt", merged.name)
+        assertEquals(80, merged.kcalPer100g)
+        assertEquals(9.0, merged.proteinPer100g ?: -1.0, 0.0)
+        assertEquals(0.0, merged.carbsPer100g ?: -1.0, 0.0)
+        assertEquals(1.5, merged.fatPer100g ?: -1.0, 0.0)
+        assertEquals("openfoodfacts+calorieapi", merged.source)
+    }
+
+    @Test
+    fun doesNotMergeDifferentBarcodes() {
+        val primary = FoodProduct(code = "123", name = "Yogurt", kcalPer100g = 80)
+        val otherProduct = FoodProduct(
+            code = "456",
+            name = "Other product",
+            proteinPer100g = 9.0,
+            source = "calorieapi"
+        )
+
+        val merged = primary.withMissingMacrosFrom(otherProduct)
+
+        assertEquals(primary, merged)
     }
 
     @Test

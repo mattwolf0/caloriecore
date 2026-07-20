@@ -113,8 +113,8 @@ private fun OffShelfRow(offFood: FoodProduct, strings: CalorieCoreStrings, onSel
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = offFood.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    text = "${CalorieCoreFormatter.kcal(offFood.kcalPer100g)} / 100 g | " +
-                        "P ${CalorieCoreFormatter.grams(offFood.proteinPer100g)}",
+                    text = "${offFood.kcalPer100g.toKcalText()} / 100 g | " +
+                        "P ${offFood.proteinPer100g.toGramText()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -123,3 +123,7 @@ private fun OffShelfRow(offFood: FoodProduct, strings: CalorieCoreStrings, onSel
         }
     }
 }
+
+private fun Int?.toKcalText(): String = this?.let(CalorieCoreFormatter::kcal) ?: "— kcal"
+
+private fun Double?.toGramText(): String = this?.let(CalorieCoreFormatter::grams) ?: "—"

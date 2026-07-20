@@ -48,7 +48,7 @@ internal fun FoodEntryEditor(
                 onScanBarcode = onScanBarcode,
                 onLookupBarcode = onLookupBarcode,
                 onSearchFood = onSearchFood,
-                onSelectProduct = { editor.useOffProduct(it, strings.productLoaded) }
+                onSelectProduct = { editor.useLookupProduct(it, strings.productLoaded) }
             )
             OutlinedTextField(
                 value = draft.name,

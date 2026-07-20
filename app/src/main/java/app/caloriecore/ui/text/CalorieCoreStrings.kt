@@ -51,6 +51,7 @@ data class CalorieCoreStrings(
     val findProductByBarcode: String,
     val lookingUp: String,
     val productLoaded: String,
+    val calorieApiAttribution: String,
     val invalidBarcode: String,
     val invalidSearch: String,
     val productNotFound: String,

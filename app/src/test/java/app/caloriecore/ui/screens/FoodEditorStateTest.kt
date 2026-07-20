@@ -13,7 +13,7 @@ class FoodEditorStateTest {
     fun updatesProductMacrosForServing() {
         val editor = foodEditorForTest(selectedDateTime = 100L)
 
-        editor.useOffProduct(
+        editor.useLookupProduct(
             FoodProduct(
                 code = "123",
                 name = "Skyr",
@@ -31,18 +31,35 @@ class FoodEditorStateTest {
         assertEquals("27.5", editor.draft.protein)
         assertEquals("10", editor.draft.carbs)
         assertEquals("0.5", editor.draft.fat)
-        assertTrue(editor.draft.keepsOffPer100Base)
+        assertTrue(editor.draft.keepsProductPer100Base)
     }
 
     @Test
     fun manualCaloriesStopProductBase() {
         val editor = foodEditorForTest(selectedDateTime = 100L)
 
-        editor.useOffProduct(FoodProduct(code = "123", name = "Bread", kcalPer100g = 240), "loaded")
+        editor.useLookupProduct(FoodProduct(code = "123", name = "Bread", kcalPer100g = 240), "loaded")
         editor.updateCalories("260")
 
         assertEquals("260", editor.draft.kcal)
-        assertFalse(editor.draft.keepsOffPer100Base)
+        assertFalse(editor.draft.keepsProductPer100Base)
+    }
+
+    @Test
+    fun keepsMissingProductMacrosBlank() {
+        val editor = foodEditorForTest(selectedDateTime = 100L)
+
+        editor.useLookupProduct(
+            FoodProduct(code = "123", name = "Partial yogurt", kcalPer100g = 80),
+            "loaded"
+        )
+        editor.updateServing("250")
+        editor.refreshProductTotals()
+
+        assertEquals("200", editor.draft.kcal)
+        assertEquals("", editor.draft.protein)
+        assertEquals("", editor.draft.carbs)
+        assertEquals("", editor.draft.fat)
     }
 
     @Test
@@ -60,7 +77,7 @@ class FoodEditorStateTest {
         )
 
         editor.edit(original)
-        editor.useOffProduct(FoodProduct(code = "999", name = "New yogurt", kcalPer100g = 100), "loaded")
+        editor.useLookupProduct(FoodProduct(code = "999", name = "New yogurt", kcalPer100g = 100), "loaded")
 
         assertEquals(42L, editor.buildEntry().id)
         assertEquals("New yogurt", editor.buildEntry().name)
