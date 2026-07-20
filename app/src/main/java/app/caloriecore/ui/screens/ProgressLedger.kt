@@ -5,6 +5,7 @@ import app.caloriecore.ui.model.burnEstimateForDay
 import app.caloriecore.ui.model.gymLogsOnPhoneDay
 import app.caloriecore.ui.model.mealsOnPhoneDay
 import app.caloriecore.ui.model.nearestBodyCheckIn
+import app.caloriecore.ui.model.samePhoneDay
 import app.caloriecore.ui.model.sumPlateMacros
 import java.time.Instant
 import java.time.LocalDate
@@ -17,11 +18,11 @@ private val SmallTickDate: DateTimeFormatter = DateTimeFormatter.ofPattern("MM.d
 internal data class WeekLedgerPoint(
     val millis: Long,
     val label: String,
-    val weightKg: Double,
-    val intakeKcal: Int,
-    val burnKcal: Int,
-    val balanceKcal: Int,
-    val trainingVolumeKg: Double
+    val weightKg: Double?,
+    val intakeKcal: Int?,
+    val burnKcal: Int?,
+    val balanceKcal: Int?,
+    val trainingVolumeKg: Double?
 )
 
 internal fun weekAroundPickedDay(logbook: Logbook, days: Int): List<WeekLedgerPoint> {
@@ -36,14 +37,17 @@ internal fun weekAroundPickedDay(logbook: Logbook, days: Int): List<WeekLedgerPo
         val profile = nearestBodyCheckIn(logbook.bodyHistory, millis)
         val nutrition = sumPlateMacros(foodEntries)
         val burn = burnEstimateForDay(profile, foodEntries)
+        val dayProfile = logbook.bodyHistory
+            .filter { samePhoneDay(it.loggedAt, millis) }
+            .maxByOrNull { it.loggedAt }
         WeekLedgerPoint(
             millis = millis,
             label = date.format(SmallTickDate),
-            weightKg = profile.weightKg,
-            intakeKcal = nutrition.calories,
-            burnKcal = burn.total,
-            balanceKcal = nutrition.calories - burn.total,
-            trainingVolumeKg = sessions.sumOf { it.totalVolumeKg }
+            weightKg = dayProfile?.weightKg,
+            intakeKcal = nutrition.calories.takeIf { foodEntries.isNotEmpty() },
+            burnKcal = burn.total.takeIf { foodEntries.isNotEmpty() },
+            balanceKcal = (nutrition.calories - burn.total).takeIf { foodEntries.isNotEmpty() },
+            trainingVolumeKg = sessions.sumOf { it.totalVolumeKg }.takeIf { sessions.isNotEmpty() }
         )
     }
 }

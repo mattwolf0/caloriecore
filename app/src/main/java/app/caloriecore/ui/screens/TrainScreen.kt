@@ -1,7 +1,6 @@
 package app.caloriecore.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,10 +14,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.ConfirmActionDialog
+import app.caloriecore.ui.components.DayPicker
 import app.caloriecore.ui.components.LogCard
-import app.caloriecore.ui.components.LogMomentPicker
 import app.caloriecore.ui.components.ScreenName
-import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.components.StatTile
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.Logbook
@@ -49,6 +48,27 @@ fun TrainScreen(
     val workoutDraft = rememberWorkoutDraft(logbook.selectedDateTime)
 
     var showPlanBuilder by rememberSaveable { mutableStateOf(false) }
+    var deletePlanId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var deleteSessionId by rememberSaveable { mutableStateOf<Long?>(null) }
+
+    if (deletePlanId != null || deleteSessionId != null) {
+        ConfirmActionDialog(
+            title = strings.deleteConfirmTitle,
+            message = strings.deleteConfirmText,
+            confirmText = strings.delete,
+            cancelText = strings.cancel,
+            onConfirm = {
+                deletePlanId?.let(onRemovePlan)
+                deleteSessionId?.let(onRemoveSession)
+                deletePlanId = null
+                deleteSessionId = null
+            },
+            onDismiss = {
+                deletePlanId = null
+                deleteSessionId = null
+            }
+        )
+    }
 
     LaunchedEffect(logbook.selectedDateTime) {
         workoutDraft.followSelectedMoment(logbook.selectedDateTime)
@@ -61,16 +81,14 @@ fun TrainScreen(
         item { ScreenName(title = strings.trainTitle) }
         item {
             LogCard {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    ShelfHeader(strings.selectedMoment)
-                    LogMomentPicker(
-                        pickedMillis = logbook.selectedDateTime,
-                        onValueChange = onSelectedDateTimeChange,
-                        dateLabel = strings.date,
-                        timeLabel = strings.time,
-                        todayText = strings.todayButton
-                    )
-                }
+                DayPicker(
+                    pickedMillis = logbook.selectedDateTime,
+                    onValueChange = onSelectedDateTimeChange,
+                    dateLabel = strings.date,
+                    todayText = strings.todayButton,
+                    previousDayText = strings.previousDay,
+                    nextDayText = strings.nextDay
+                )
             }
         }
         item {
@@ -100,9 +118,9 @@ fun TrainScreen(
                 planDraft.reopen(plan)
                 showPlanBuilder = true
             },
-            onDeletePlan = { plan -> onRemovePlan(plan.id) },
+            onDeletePlan = { plan -> deletePlanId = plan.id },
             onEditSession = workoutDraft::reopen,
-            onDeleteSession = { session -> onRemoveSession(session.id) }
+            onDeleteSession = { session -> deleteSessionId = session.id }
         )
         if (showPlanBuilder) {
             item {

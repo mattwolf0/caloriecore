@@ -51,6 +51,14 @@ fun makeOldVersionThreeDatabase(context: Context) {
         )
         db.execSQL(
             """
+            INSERT INTO meals (
+                id, logged_at, name, barcode, serving_grams, calories,
+                protein_grams, carb_grams, fat_grams
+            ) VALUES (1, 1, 'Old meal', '', 100, 200, 10, 20, 5)
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
             CREATE TABLE food_products (
                 id INTEGER PRIMARY KEY,
                 code TEXT NOT NULL,

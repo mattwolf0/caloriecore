@@ -17,6 +17,7 @@ import app.caloriecore.ui.model.UiThemeMode
 import app.caloriecore.ui.model.parseLogMoment
 import app.caloriecore.ui.model.startSheetFor
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,7 +44,8 @@ class LogbookRepositoryInstrumentedTest {
                 calories = 650,
                 proteinGrams = 42.0,
                 carbGrams = 82.0,
-                fatGrams = 18.0
+                fatGrams = 0.0,
+                fatKnown = false
             )
             val mondayPressPlan = TrainingPlan(
                 title = "Monday press",
@@ -100,6 +102,7 @@ class LogbookRepositoryInstrumentedTest {
             assertEquals(1, savedLogbook.bodyHistory.size)
             assertEquals(18.0, savedLogbook.bodyHistory.first().bodyFatPercent ?: 0.0, 0.0)
             assertEquals(listOf("Rice bowl"), savedLogbook.foodEntries.map { it.name })
+            assertFalse(savedLogbook.foodEntries.single().fatKnown)
             assertEquals(listOf("Monday press"), savedLogbook.trainingPlans.map { it.title })
             assertEquals(3, savedLogbook.trainingPlans.first().exercises.first().plannedSets.first().setCount)
             assertEquals(10, savedLogbook.trainingPlans.first().exercises.first().plannedSets.first().reps)
@@ -130,6 +133,9 @@ class LogbookRepositoryInstrumentedTest {
 
             assertEquals(UiLanguage.System, migratedLogbook.settings.language)
             assertEquals(UiThemeMode.System, migratedLogbook.settings.themeMode)
+            assertTrue(migratedLogbook.foodEntries.single().proteinKnown)
+            assertTrue(migratedLogbook.foodEntries.single().carbsKnown)
+            assertTrue(migratedLogbook.foodEntries.single().fatKnown)
         } finally {
             context.deleteDatabase(DatabaseName)
         }

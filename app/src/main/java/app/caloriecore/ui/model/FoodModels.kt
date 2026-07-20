@@ -28,7 +28,10 @@ data class FoodProduct(
             calories = ((kcalPer100g ?: 0) * scale).roundToInt(),
             proteinGrams = (proteinPer100g ?: 0.0) * scale,
             carbGrams = (carbsPer100g ?: 0.0) * scale,
-            fatGrams = (fatPer100g ?: 0.0) * scale
+            fatGrams = (fatPer100g ?: 0.0) * scale,
+            proteinKnown = proteinPer100g != null,
+            carbsKnown = carbsPer100g != null,
+            fatKnown = fatPer100g != null
         )
     }
 }
@@ -57,7 +60,10 @@ data class FoodEntry(
     val calories: Int,
     val proteinGrams: Double,
     val carbGrams: Double,
-    val fatGrams: Double
+    val fatGrams: Double,
+    val proteinKnown: Boolean = true,
+    val carbsKnown: Boolean = true,
+    val fatKnown: Boolean = true
 )
 
 data class NutritionTotals(

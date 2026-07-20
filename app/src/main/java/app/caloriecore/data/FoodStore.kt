@@ -19,7 +19,10 @@ internal class FoodStore(private val db: SQLiteDatabase) {
                 calories = int("calories"),
                 proteinGrams = double("protein_grams"),
                 carbGrams = double("carb_grams"),
-                fatGrams = double("fat_grams")
+                fatGrams = double("fat_grams"),
+                proteinKnown = int("protein_known") != 0,
+                carbsKnown = int("carb_known") != 0,
+                fatKnown = int("fat_known") != 0
             )
         }
     }
@@ -35,6 +38,9 @@ internal class FoodStore(private val db: SQLiteDatabase) {
             put("protein_grams", meal.proteinGrams)
             put("carb_grams", meal.carbGrams)
             put("fat_grams", meal.fatGrams)
+            put("protein_known", if (meal.proteinKnown) 1 else 0)
+            put("carb_known", if (meal.carbsKnown) 1 else 0)
+            put("fat_known", if (meal.fatKnown) 1 else 0)
         }
         db.insertWithOnConflict("meals", null, values, SQLiteDatabase.CONFLICT_REPLACE)
     }

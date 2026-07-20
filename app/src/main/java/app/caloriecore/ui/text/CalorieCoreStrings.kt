@@ -141,7 +141,18 @@ data class CalorieCoreStrings(
     val createPlan: String = "Create plan",
     val close: String = "Close",
     val planPreview: String = "Plan preview",
-    val addThisExercise: String = "Add this exercise"
+    val addThisExercise: String = "Add this exercise",
+    val cancel: String = "Cancel",
+    val deleteConfirmTitle: String = "Delete entry?",
+    val deleteConfirmText: String = "This cannot be undone.",
+    val clearDataConfirmTitle: String = "Clear all local data?",
+    val clearDataConfirmText: String = "Meals, workouts and profile data will be permanently deleted.",
+    val missingMacroData: String = "Some macro values are missing.",
+    val showDetails: String = "Show details",
+    val hideDetails: String = "Hide details",
+    val dailyBalance: String = "Balance",
+    val previousDay: String = "Previous day",
+    val nextDay: String = "Next day"
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today

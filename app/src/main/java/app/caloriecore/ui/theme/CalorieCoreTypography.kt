@@ -55,8 +55,8 @@ val CompactGymTypography = Typography(
     bodySmall = TextStyle(
         fontFamily = PhoneSans,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 17.sp
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
     labelLarge = TextStyle(
         fontFamily = PhoneSans,

@@ -34,27 +34,29 @@ internal fun FoodLookupBox(
     val draft = editor.draft
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SolidActionButton(
-                text = strings.scanBarcode,
-                enabled = !lookupBusy,
-                modifier = Modifier.weight(1f),
-                onClick = onScanBarcode
-            )
-            SolidActionButton(
-                text = if (lookupBusy) strings.lookingUp else strings.findProductByBarcode,
-                enabled = draft.barcode.isNotBlank() && !lookupBusy,
-                modifier = Modifier.weight(1f),
-                onClick = onLookupBarcode
-            )
-        }
-        OutlinedTextField(
-            value = draft.barcode,
-            onValueChange = editor::updateBarcode,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(strings.barcode) },
-            singleLine = true
+        SolidActionButton(
+            text = strings.scanBarcode,
+            enabled = !lookupBusy,
+            onClick = onScanBarcode
         )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = draft.barcode,
+                onValueChange = editor::updateBarcode,
+                modifier = Modifier.weight(1f),
+                label = { Text(strings.barcode) },
+                singleLine = true
+            )
+            TextButton(
+                enabled = draft.barcode.isNotBlank() && !lookupBusy,
+                onClick = onLookupBarcode
+            ) {
+                Text(if (lookupBusy) strings.lookingUp else strings.findProductByBarcode)
+            }
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
