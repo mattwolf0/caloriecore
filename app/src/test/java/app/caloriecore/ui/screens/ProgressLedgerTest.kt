@@ -55,8 +55,10 @@ class ProgressLedgerTest {
 
         assertEquals(7, week.size)
         assertEquals(700, pickedDay.intakeKcal)
-        assertEquals(400.0, pickedDay.trainingVolumeKg, 0.0)
-        assertTrue(pickedDay.burnKcal > 0)
-        assertEquals(700 - pickedDay.burnKcal, pickedDay.balanceKcal)
+        assertEquals(400.0, pickedDay.trainingVolumeKg ?: 0.0, 0.0)
+        assertTrue((pickedDay.burnKcal ?: 0) > 0)
+        assertEquals(700 - (pickedDay.burnKcal ?: 0), pickedDay.balanceKcal)
+        assertEquals(null, week[1].weightKg)
+        assertEquals(null, week[1].balanceKcal)
     }
 }

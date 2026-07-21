@@ -60,6 +60,11 @@ class FoodEditorStateTest {
         assertEquals("", editor.draft.protein)
         assertEquals("", editor.draft.carbs)
         assertEquals("", editor.draft.fat)
+
+        val entry = editor.buildEntry()
+        assertFalse(entry.proteinKnown)
+        assertFalse(entry.carbsKnown)
+        assertFalse(entry.fatKnown)
     }
 
     @Test

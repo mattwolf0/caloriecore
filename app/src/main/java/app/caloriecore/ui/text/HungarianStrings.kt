@@ -133,5 +133,16 @@ internal val hungarianStrings = CalorieCoreStrings(
     createPlan = "Edzésterv létrehozása",
     close = "Bezárás",
     planPreview = "Terv előnézet",
-    addThisExercise = "Gyakorlat hozzáadása"
+    addThisExercise = "Gyakorlat hozzáadása",
+    cancel = "Mégse",
+    deleteConfirmTitle = "Törlöd a bejegyzést?",
+    deleteConfirmText = "Ez a művelet nem vonható vissza.",
+    clearDataConfirmTitle = "Törlöd az összes helyi adatot?",
+    clearDataConfirmText = "Az étkezések, edzések és profiladatok végleg törlődnek.",
+    missingMacroData = "Néhány makróérték hiányzik.",
+    showDetails = "Részletek mutatása",
+    hideDetails = "Részletek elrejtése",
+    dailyBalance = "Egyenleg",
+    previousDay = "Előző nap",
+    nextDay = "Következő nap"
 )

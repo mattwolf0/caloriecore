@@ -42,7 +42,10 @@ internal fun createTables(db: SQLiteDatabase) {
             calories INTEGER NOT NULL,
             protein_grams REAL NOT NULL,
             carb_grams REAL NOT NULL,
-            fat_grams REAL NOT NULL
+            fat_grams REAL NOT NULL,
+            protein_known INTEGER NOT NULL DEFAULT 1,
+            carb_known INTEGER NOT NULL DEFAULT 1,
+            fat_known INTEGER NOT NULL DEFAULT 1
         )
         """.trimIndent()
     )

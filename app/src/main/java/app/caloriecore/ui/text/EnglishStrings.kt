@@ -133,5 +133,16 @@ internal val englishStrings = CalorieCoreStrings(
     createPlan = "Create plan",
     close = "Close",
     planPreview = "Plan preview",
-    addThisExercise = "Add this exercise"
+    addThisExercise = "Add this exercise",
+    cancel = "Cancel",
+    deleteConfirmTitle = "Delete entry?",
+    deleteConfirmText = "This cannot be undone.",
+    clearDataConfirmTitle = "Clear all local data?",
+    clearDataConfirmText = "Meals, workouts and profile data will be permanently deleted.",
+    missingMacroData = "Some macro values are missing.",
+    showDetails = "Show details",
+    hideDetails = "Hide details",
+    dailyBalance = "Balance",
+    previousDay = "Previous day",
+    nextDay = "Next day"
 )

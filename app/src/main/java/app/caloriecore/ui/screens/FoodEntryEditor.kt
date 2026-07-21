@@ -27,7 +27,8 @@ internal fun FoodEntryEditor(
     onScanBarcode: () -> Unit,
     onLookupBarcode: () -> Unit,
     onSearchFood: () -> Unit,
-    onSaveFoodEntry: (FoodEntry) -> Unit
+    onSaveFoodEntry: (FoodEntry) -> Unit,
+    onClose: () -> Unit
 ) {
     val draft = editor.draft
 
@@ -39,7 +40,9 @@ internal fun FoodEntryEditor(
                 onValueChange = editor::changeLoggedAt,
                 dateLabel = strings.date,
                 timeLabel = strings.time,
-                todayText = strings.todayButton
+                todayText = strings.todayButton,
+                previousDayText = strings.previousDay,
+                nextDayText = strings.nextDay
             )
             FoodLookupBox(
                 editor = editor,
@@ -107,9 +110,15 @@ internal fun FoodEntryEditor(
                         onSaveFoodEntry(editor.buildEntry())
                         editor.clear(selectedDateTime)
                         editor.lookupNote = strings.saved
+                        onClose()
                     }
                 )
-                TextButton(onClick = { editor.clear(selectedDateTime) }) { Text(strings.clear) }
+                TextButton(
+                    onClick = {
+                        editor.clear(selectedDateTime)
+                        onClose()
+                    }
+                ) { Text(strings.cancel) }
             }
         }
     }

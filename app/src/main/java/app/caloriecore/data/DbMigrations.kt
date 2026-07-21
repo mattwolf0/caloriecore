@@ -16,6 +16,7 @@ internal fun upgradeDatabase(db: SQLiteDatabase, oldVersion: Int, newVersion: In
     } else {
         if (oldVersion < 3) migrateToVersion3(db)
         if (oldVersion < 4) migrateToVersion4(db)
+        if (oldVersion < 5) migrateToVersion5(db)
     }
 }
 
@@ -40,4 +41,10 @@ private fun migrateToVersion3(db: SQLiteDatabase) {
 private fun migrateToVersion4(db: SQLiteDatabase) {
     db.execSQL("UPDATE settings SET language = ? WHERE language = ?", arrayOf(UiLanguage.System.name, UiLanguage.English.name))
     db.execSQL("UPDATE settings SET theme_mode = ? WHERE theme_mode = ?", arrayOf(UiThemeMode.System.name, UiThemeMode.Light.name))
+}
+
+private fun migrateToVersion5(db: SQLiteDatabase) {
+    db.execSQL("ALTER TABLE meals ADD COLUMN protein_known INTEGER NOT NULL DEFAULT 1")
+    db.execSQL("ALTER TABLE meals ADD COLUMN carb_known INTEGER NOT NULL DEFAULT 1")
+    db.execSQL("ALTER TABLE meals ADD COLUMN fat_known INTEGER NOT NULL DEFAULT 1")
 }

@@ -11,7 +11,7 @@ import app.caloriecore.ui.model.nearestBodyCheckIn
 import app.caloriecore.ui.model.phoneNowMillis
 
 internal const val DbName = "calorie_core.db"
-internal const val DbVersion = 4
+internal const val DbVersion = 5
 internal const val DbTag = "AppDb"
 
 internal class AppDatabase(context: Context) :

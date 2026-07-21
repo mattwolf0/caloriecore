@@ -80,9 +80,9 @@ internal class FoodEditorState internal constructor(
             barcode = entry.barcode,
             grams = entry.servingGrams.toString(),
             kcal = entry.calories.toString(),
-            protein = CalorieCoreFormatter.logDecimal(entry.proteinGrams),
-            carbs = CalorieCoreFormatter.logDecimal(entry.carbGrams),
-            fat = CalorieCoreFormatter.logDecimal(entry.fatGrams)
+            protein = if (entry.proteinKnown) CalorieCoreFormatter.logDecimal(entry.proteinGrams) else "",
+            carbs = if (entry.carbsKnown) CalorieCoreFormatter.logDecimal(entry.carbGrams) else "",
+            fat = if (entry.fatKnown) CalorieCoreFormatter.logDecimal(entry.fatGrams) else ""
         )
         lookupNote = null
         hideOffShelf()
@@ -195,7 +195,10 @@ internal class FoodEditorState internal constructor(
         calories = draft.kcal.toIntOrNull() ?: 0,
         proteinGrams = draft.protein.toDoubleOrNull() ?: 0.0,
         carbGrams = draft.carbs.toDoubleOrNull() ?: 0.0,
-        fatGrams = draft.fat.toDoubleOrNull() ?: 0.0
+        fatGrams = draft.fat.toDoubleOrNull() ?: 0.0,
+        proteinKnown = draft.protein.isNotBlank(),
+        carbsKnown = draft.carbs.isNotBlank(),
+        fatKnown = draft.fat.isNotBlank()
     )
 }
 

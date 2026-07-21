@@ -63,9 +63,9 @@ private fun MealLogRow(entry: FoodEntry, strings: CalorieCoreStrings, onEdit: ()
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                MiniBadge("P ${CalorieCoreFormatter.grams(entry.proteinGrams)}", color = GymGreen)
-                MiniBadge("C ${CalorieCoreFormatter.grams(entry.carbGrams)}", color = FoodAmber)
-                MiniBadge("F ${CalorieCoreFormatter.grams(entry.fatGrams)}", color = WarningRed)
+                MiniBadge("P ${macroValue(entry.proteinGrams, entry.proteinKnown)}", color = GymGreen)
+                MiniBadge("C ${macroValue(entry.carbGrams, entry.carbsKnown)}", color = FoodAmber)
+                MiniBadge("F ${macroValue(entry.fatGrams, entry.fatKnown)}", color = WarningRed)
             }
             if (entry.barcode.isNotBlank()) {
                 Text(
@@ -77,6 +77,9 @@ private fun MealLogRow(entry: FoodEntry, strings: CalorieCoreStrings, onEdit: ()
         }
     }
 }
+
+private fun macroValue(value: Double, isKnown: Boolean): String =
+    if (isKnown) CalorieCoreFormatter.grams(value) else "—"
 
 @Composable
 private fun EmptyMealCard(message: String) {

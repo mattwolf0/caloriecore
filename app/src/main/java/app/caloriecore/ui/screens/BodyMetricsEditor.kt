@@ -13,11 +13,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
-import app.caloriecore.ui.components.MiniBadge
 import app.caloriecore.ui.components.NumberInput
 import app.caloriecore.ui.components.keepLogNumberText
 import app.caloriecore.ui.format.CalorieCoreFormatter
@@ -26,7 +27,6 @@ import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 import app.caloriecore.ui.theme.GymGreen
-import app.caloriecore.ui.theme.WarningRed
 
 @Composable
 fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProfileChange: (BodySnapshot) -> Unit) {
@@ -35,16 +35,48 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (!bodyCardOpen) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                            MiniBadge(CalorieCoreFormatter.kilograms(profile.weightKg), color = GymGreen)
-                            MiniBadge("${profile.heightCm} cm", color = FoodAmber)
-                            profile.bodyFatPercent?.let { MiniBadge(CalorieCoreFormatter.percent(it), color = WarningRed) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ProfileMetric(
+                                label = strings.weight,
+                                value = CalorieCoreFormatter.kilograms(profile.weightKg),
+                                color = GymGreen,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ProfileMetric(
+                                label = strings.height,
+                                value = "${profile.heightCm} cm",
+                                color = FoodAmber,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                            MiniBadge("${profile.steps} ${strings.steps.lowercase()}", color = GymGreen)
-                            MiniBadge(CalorieCoreFormatter.bpm(profile.restingHeartRate), color = FoodAmber)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ProfileMetric(
+                                label = strings.steps,
+                                value = profile.steps.toString(),
+                                color = GymGreen,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ProfileMetric(
+                                label = strings.restingHeartRate,
+                                value = CalorieCoreFormatter.bpm(profile.restingHeartRate),
+                                color = FoodAmber,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                     TextButton(onClick = { bodyCardOpen = true }) { Text(strings.edit) }
@@ -167,5 +199,27 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun ProfileMetric(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = color,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
