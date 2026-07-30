@@ -152,7 +152,11 @@ data class CalorieCoreStrings(
     val hideDetails: String = "Hide details",
     val dailyBalance: String = "Balance",
     val previousDay: String = "Previous day",
-    val nextDay: String = "Next day"
+    val nextDay: String = "Next day",
+    val phoneStepsStarting: String = "Starting...",
+    val stepPermissionNeeded: String = "Allow activity access to track steps.",
+    val stepCounterUnavailable: String = "Step tracking is not available.",
+    val stepCounterError: String = "Could not start. Try again."
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today
