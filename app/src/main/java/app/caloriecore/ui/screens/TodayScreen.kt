@@ -21,7 +21,10 @@ import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.components.StatTile
 import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.Logbook
+import app.caloriecore.ui.model.PhoneStepState
+import app.caloriecore.ui.model.phoneNowMillis
 import app.caloriecore.ui.model.pickedDayReport
+import app.caloriecore.ui.model.samePhoneDay
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 import app.caloriecore.ui.theme.GymGreen
@@ -32,7 +35,8 @@ fun TodayScreen(
     logbook: Logbook,
     strings: CalorieCoreStrings,
     onSelectedDateTimeChange: (Long) -> Unit,
-    onProfileChange: (BodySnapshot) -> Unit
+    onProfileChange: (BodySnapshot) -> Unit,
+    phoneStepState: PhoneStepState
 ) {
     val pickedDayReport = logbook.pickedDayReport()
     val burnMath = pickedDayReport.burnEstimate
@@ -64,8 +68,22 @@ fun TodayScreen(
                 strings = strings
             )
         }
+        if (samePhoneDay(logbook.selectedDateTime, phoneNowMillis())) {
+            item {
+                StepCounterCard(
+                    state = phoneStepState,
+                    strings = strings
+                )
+            }
+        }
         item { ShelfHeader(strings.profileData, strings.saved) }
-        item { BodyMetricsEditor(profile = bodyCard, strings = strings, onProfileChange = onProfileChange) }
+        item {
+            BodyMetricsEditor(
+                profile = bodyCard,
+                strings = strings,
+                onProfileChange = onProfileChange
+            )
+        }
         item {
             TextButton(
                 modifier = Modifier.fillMaxWidth(),
@@ -87,7 +105,7 @@ fun TodayScreen(
                     StatTile(
                         label = strings.watch,
                         metricText = burnMath.activeCalories.toString(),
-                        detail = "${bodyCard.steps} ${strings.steps.lowercase()}",
+                        detail = strings.activeCalories,
                         modifier = Modifier.weight(1f),
                         accent = FoodAmber
                     )

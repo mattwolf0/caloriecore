@@ -8,6 +8,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,7 +20,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.caloriecore.data.LogbookRepository
 import app.caloriecore.ui.components.CalorieCoreBackdrop
+import app.caloriecore.ui.model.PhoneStepStatus
 import app.caloriecore.ui.model.UiThemeMode
+import app.caloriecore.ui.model.phoneNowMillis
+import app.caloriecore.ui.model.samePhoneDay
 import app.caloriecore.ui.navigation.CalorieCoreTab
 import app.caloriecore.ui.screens.FoodScreen
 import app.caloriecore.ui.screens.ProgressScreen
@@ -28,6 +32,7 @@ import app.caloriecore.ui.screens.TodayScreen
 import app.caloriecore.ui.screens.TrainScreen
 import app.caloriecore.ui.text.calorieCoreStrings
 import app.caloriecore.ui.theme.CalorieCoreTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun CalorieCoreApp() {
@@ -35,10 +40,38 @@ fun CalorieCoreApp() {
     val appState = rememberAppState(
         repository = remember { LogbookRepository(context) }
     )
+    val phoneSteps = rememberPhoneSteps()
     var currentTab by rememberSaveable { mutableStateOf(CalorieCoreTab.Today) }
+    var lastStepSaveAt by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(appState) {
         appState.load()
+    }
+
+    LaunchedEffect(phoneSteps.state, appState.logbook?.selectedDateTime) {
+        val logbook = appState.logbook ?: return@LaunchedEffect
+        if (
+            phoneSteps.state.status == PhoneStepStatus.Active &&
+            samePhoneDay(logbook.selectedDateTime, phoneNowMillis()) &&
+            logbook.profile.steps != phoneSteps.state.steps
+        ) {
+            val saveWait = lastStepSaveAt + StepSaveIntervalMillis - phoneNowMillis()
+            if (lastStepSaveAt > 0L && saveWait > 0L) {
+                delay(saveWait)
+            }
+
+            val currentLogbook = appState.logbook ?: return@LaunchedEffect
+            if (
+                phoneSteps.state.status == PhoneStepStatus.Active &&
+                samePhoneDay(currentLogbook.selectedDateTime, phoneNowMillis()) &&
+                currentLogbook.profile.steps != phoneSteps.state.steps
+            ) {
+                appState.saveBodyEntry(
+                    currentLogbook.profile.copy(steps = phoneSteps.state.steps)
+                )
+                lastStepSaveAt = phoneNowMillis()
+            }
+        }
     }
 
     val logbook = appState.logbook
@@ -65,7 +98,8 @@ fun CalorieCoreApp() {
                                 logbook = logbook,
                                 strings = strings,
                                 onSelectedDateTimeChange = appState::jumpToMoment,
-                                onProfileChange = appState::saveBodyEntry
+                                onProfileChange = appState::saveBodyEntry,
+                                phoneStepState = phoneSteps.state
                             )
 
                             CalorieCoreTab.Food -> FoodScreen(
@@ -105,6 +139,8 @@ fun CalorieCoreApp() {
         }
     }
 }
+
+private const val StepSaveIntervalMillis = 5 * 60_000L
 
 @Composable
 private fun FirstLoadSpinner() {
