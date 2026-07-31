@@ -170,7 +170,21 @@ data class CalorieCoreStrings(
     val weightUsed: String,
     val noActivities: String,
     val activityDoubleCountWarning: String,
-    val activityCatalogSource: String
+    val activityCatalogSource: String,
+    val legalAndDataSources: String,
+    val legalInfoText: String,
+    val dataSources: String,
+    val softwareLicenses: String,
+    val serviceTerms: String,
+    val back: String,
+    val view: String,
+    val openLink: String,
+    val compendiumLegalText: String,
+    val openFoodFactsLegalText: String,
+    val calorieApiLegalText: String,
+    val androidLibrariesLegalText: String,
+    val kotlinLegalText: String,
+    val googleServicesLegalText: String
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today
