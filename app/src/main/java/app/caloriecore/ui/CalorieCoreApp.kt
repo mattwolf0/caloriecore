@@ -31,6 +31,7 @@ import app.caloriecore.ui.screens.SettingsScreen
 import app.caloriecore.ui.screens.TodayScreen
 import app.caloriecore.ui.screens.TrainScreen
 import app.caloriecore.ui.text.calorieCoreStrings
+import app.caloriecore.ui.text.resolveCalorieCoreLanguage
 import app.caloriecore.ui.theme.CalorieCoreTheme
 import kotlinx.coroutines.delay
 
@@ -114,6 +115,10 @@ fun CalorieCoreApp() {
                                 logbook = logbook,
                                 strings = strings,
                                 onSelectedDateTimeChange = appState::jumpToMoment,
+                                activityCatalog = appState.activityCatalog?.items.orEmpty(),
+                                activityLanguage = resolveCalorieCoreLanguage(logbook.settings.language),
+                                onSaveActivity = appState::saveActivity,
+                                onRemoveActivity = appState::deleteActivity,
                                 onSavePlan = appState::savePlan,
                                 onRemovePlan = appState::deletePlan,
                                 onSaveSession = appState::saveWorkout,

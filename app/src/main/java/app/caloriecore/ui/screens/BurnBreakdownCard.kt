@@ -24,6 +24,7 @@ internal fun BurnBreakdownCard(burn: BurnEstimate, strings: CalorieCoreStrings) 
             BurnLineItem(strings.baseMetabolism, burn.bmr)
             BurnLineItem(strings.watchActivity, burn.activeCalories)
             BurnLineItem(strings.plannedWorkout, burn.plannedTraining)
+            BurnLineItem(strings.loggedActivity, burn.loggedActivityCalories)
             BurnLineItem("TEF", burn.tef)
             BurnLineItem(strings.sleepCorrection, burn.sleepAdjustment)
         }

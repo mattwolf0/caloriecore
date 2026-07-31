@@ -20,9 +20,13 @@ import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.StatTile
 import app.caloriecore.ui.format.CalorieCoreFormatter
+import app.caloriecore.ui.model.ActivityCatalogItem
+import app.caloriecore.ui.model.ActivityEntry
 import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.TrainingPlan
 import app.caloriecore.ui.model.TrainingSession
+import app.caloriecore.ui.model.UiLanguage
+import app.caloriecore.ui.model.activityRowsForPickedDay
 import app.caloriecore.ui.model.finishedPlanIdsOnPhoneDay
 import app.caloriecore.ui.model.gymRowsForPickedDay
 import app.caloriecore.ui.text.CalorieCoreStrings
@@ -35,23 +39,30 @@ fun TrainScreen(
     logbook: Logbook,
     strings: CalorieCoreStrings,
     onSelectedDateTimeChange: (Long) -> Unit,
+    activityCatalog: List<ActivityCatalogItem>,
+    activityLanguage: UiLanguage,
+    onSaveActivity: (ActivityEntry) -> Unit,
+    onRemoveActivity: (Long) -> Unit,
     onSavePlan: (TrainingPlan) -> Unit,
     onRemovePlan: (Long) -> Unit,
     onSaveSession: (TrainingSession) -> Unit,
     onRemoveSession: (Long) -> Unit
 ) {
     val gymLogsForPickedDay = logbook.gymRowsForPickedDay()
+    val activitiesForPickedDay = logbook.activityRowsForPickedDay()
     val plansFinishedToday = finishedPlanIdsOnPhoneDay(logbook.trainingSessions, logbook.selectedDateTime)
     val pickedDayVolumeKg = gymLogsForPickedDay.sumOf { it.totalVolumeKg }.roundToInt()
     val pickedDaySetCount = gymLogsForPickedDay.sumOf { it.totalSets }
     val planDraft = rememberTrainingPlanDraft()
     val workoutDraft = rememberWorkoutDraft(logbook.selectedDateTime)
+    val activityDraft = rememberActivityDraft(logbook.selectedDateTime, logbook.profile.weightKg)
 
     var showPlanBuilder by rememberSaveable { mutableStateOf(false) }
     var deletePlanId by rememberSaveable { mutableStateOf<Long?>(null) }
     var deleteSessionId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var deleteActivityId by rememberSaveable { mutableStateOf<Long?>(null) }
 
-    if (deletePlanId != null || deleteSessionId != null) {
+    if (deletePlanId != null || deleteSessionId != null || deleteActivityId != null) {
         ConfirmActionDialog(
             title = strings.deleteConfirmTitle,
             message = strings.deleteConfirmText,
@@ -60,18 +71,22 @@ fun TrainScreen(
             onConfirm = {
                 deletePlanId?.let(onRemovePlan)
                 deleteSessionId?.let(onRemoveSession)
+                deleteActivityId?.let(onRemoveActivity)
                 deletePlanId = null
                 deleteSessionId = null
+                deleteActivityId = null
             },
             onDismiss = {
                 deletePlanId = null
                 deleteSessionId = null
+                deleteActivityId = null
             }
         )
     }
 
     LaunchedEffect(logbook.selectedDateTime) {
         workoutDraft.followSelectedMoment(logbook.selectedDateTime)
+        activityDraft.followSelectedMoment(logbook.selectedDateTime, logbook.profile.weightKg)
     }
 
     LazyColumn(
@@ -101,6 +116,33 @@ fun TrainScreen(
                     GymGreen
                 )
                 StatTile(strings.sets, pickedDaySetCount.toString(), strings.workSets, Modifier.weight(1f), FoodAmber)
+            }
+        }
+        item {
+            ActivityLogCard(
+                entries = activitiesForPickedDay,
+                strings = strings,
+                editorOpen = activityDraft.draft.isOpen,
+                onAdd = { activityDraft.start(logbook.selectedDateTime, logbook.profile.weightKg) },
+                onEdit = { entry -> activityDraft.reopen(entry, logbook.profile.weightKg) },
+                onDelete = { entry -> deleteActivityId = entry.id }
+            )
+        }
+        if (activityDraft.draft.isOpen) {
+            item {
+                ActivityEditor(
+                    state = activityDraft,
+                    catalog = activityCatalog,
+                    language = activityLanguage,
+                    strings = strings,
+                    onSave = { entry ->
+                        onSaveActivity(entry)
+                        activityDraft.close(logbook.selectedDateTime, logbook.profile.weightKg)
+                    },
+                    onClose = {
+                        activityDraft.close(logbook.selectedDateTime, logbook.profile.weightKg)
+                    }
+                )
             }
         }
         trainingRows(

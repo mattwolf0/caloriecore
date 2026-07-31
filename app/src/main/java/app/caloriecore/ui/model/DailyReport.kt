@@ -27,6 +27,7 @@ data class BurnEstimate(
     val sleepAdjustment: Int,
     val activeCalories: Int,
     val plannedTraining: Int,
+    val loggedActivityCalories: Int,
     val total: Int,
     val sleepQuality: SleepQuality,
     val bmiCategory: BmiCategory,
@@ -36,6 +37,7 @@ data class BurnEstimate(
 data class PickedDayReport(
     val foodEntries: List<FoodEntry>,
     val sessions: List<TrainingSession>,
+    val activities: List<ActivityEntry>,
     val profile: BodySnapshot,
     val nutrition: NutritionTotals,
     val burnEstimate: BurnEstimate,
@@ -43,7 +45,11 @@ data class PickedDayReport(
     val workoutSets: Int
 )
 
-fun burnEstimateForDay(profile: BodySnapshot, foodEntries: List<FoodEntry>): BurnEstimate {
+fun burnEstimateForDay(
+    profile: BodySnapshot,
+    foodEntries: List<FoodEntry>,
+    activityEntries: List<ActivityEntry> = emptyList()
+): BurnEstimate {
     val nutrition = sumPlateMacros(foodEntries)
     val heightMeters = profile.heightCm / 100.0
     val bmi = if (heightMeters > 0.0) profile.weightKg / heightMeters.pow(2.0) else 0.0
@@ -62,7 +68,9 @@ fun burnEstimateForDay(profile: BodySnapshot, foodEntries: List<FoodEntry>): Bur
         profile.sleepHours > 9.5 -> -40
         else -> 0
     }
-    val total = bmr + profile.watchActiveCalories + profile.plannedWorkoutCalories + tef + sleepAdjustment
+    val loggedActivityCalories = activityEntries.activeCaloriesTotal()
+    val total = bmr + profile.watchActiveCalories + profile.plannedWorkoutCalories +
+        loggedActivityCalories + tef + sleepAdjustment
     return BurnEstimate(
         bmr = bmr,
         bmi = bmi,
@@ -70,6 +78,7 @@ fun burnEstimateForDay(profile: BodySnapshot, foodEntries: List<FoodEntry>): Bur
         sleepAdjustment = sleepAdjustment,
         activeCalories = profile.watchActiveCalories,
         plannedTraining = profile.plannedWorkoutCalories,
+        loggedActivityCalories = loggedActivityCalories,
         total = total,
         sleepQuality = when {
             profile.sleepHours < 5.5 -> SleepQuality.VeryLow
@@ -93,13 +102,15 @@ private fun BodySnapshot.bodyFatForBmr(): Double? =
 fun Logbook.pickedDayReport(): PickedDayReport {
     val dayMeals = foodRowsForPickedDay()
     val daySessions = gymRowsForPickedDay()
+    val dayActivities = activityRowsForPickedDay()
     val dayProfile = nearestBodyCheckIn(bodyHistory, selectedDateTime)
     return PickedDayReport(
         foodEntries = dayMeals,
         sessions = daySessions,
+        activities = dayActivities,
         profile = dayProfile,
         nutrition = sumPlateMacros(dayMeals),
-        burnEstimate = burnEstimateForDay(dayProfile, dayMeals),
+        burnEstimate = burnEstimateForDay(dayProfile, dayMeals, dayActivities),
         workoutVolumeKg = daySessions.sumOf { it.totalVolumeKg },
         workoutSets = daySessions.sumOf { it.totalSets }
     )

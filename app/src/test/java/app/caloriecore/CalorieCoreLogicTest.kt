@@ -1,17 +1,19 @@
 package app.caloriecore
 
 import app.caloriecore.ui.format.CalorieCoreFormatter
-import app.caloriecore.ui.model.UiLanguage
+import app.caloriecore.ui.model.ActivityEntry
+import app.caloriecore.ui.model.ActivitySource
+import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.LoggedExercise
 import app.caloriecore.ui.model.LoggedSet
-import app.caloriecore.ui.model.FoodProduct
 import app.caloriecore.ui.model.FoodEntry
+import app.caloriecore.ui.model.FoodProduct
 import app.caloriecore.ui.model.PlannedSetBlock
-import app.caloriecore.ui.model.BodySnapshot
-import app.caloriecore.ui.model.TrainingPlanExercise
 import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.model.TrainingPlan
+import app.caloriecore.ui.model.TrainingPlanExercise
 import app.caloriecore.ui.model.TrainingSession
+import app.caloriecore.ui.model.UiLanguage
 import app.caloriecore.ui.model.burnEstimateForDay
 import app.caloriecore.ui.model.sumPlateMacros
 import app.caloriecore.ui.model.mealsOnPhoneDay
@@ -140,6 +142,31 @@ class CalorieCoreLogicTest {
         assertEquals(100, estimate.tef)
         assertEquals(2680, estimate.total)
         assertTrue(estimate.bmi > 24.0)
+    }
+
+    @Test
+    fun addsTrainingAndLoggedActivitySeparately() {
+        val bodySnapshot = BodySnapshot(
+            sex = Sex.Male,
+            age = 30,
+            heightCm = 180,
+            weightKg = 80.0,
+            sleepHours = 7.0,
+            plannedWorkoutCalories = 300
+        )
+        val activities = listOf(
+            ActivityEntry(
+                name = "Walking",
+                source = ActivitySource.Manual,
+                activeCalories = 120
+            )
+        )
+
+        val estimate = burnEstimateForDay(bodySnapshot, emptyList(), activities)
+
+        assertEquals(300, estimate.plannedTraining)
+        assertEquals(120, estimate.loggedActivityCalories)
+        assertEquals(2200, estimate.total)
     }
 
     @Test

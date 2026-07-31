@@ -121,12 +121,19 @@ fun TodayScreen(
                         accent = WarningRed
                     )
                     StatTile(
-                        label = strings.intake,
-                        metricText = mealMath.calories.toString(),
-                        detail = strings.food,
+                        label = strings.activity,
+                        metricText = burnMath.loggedActivityCalories.toString(),
+                        detail = strings.loggedActivity,
                         modifier = Modifier.weight(1f)
                     )
                 }
+            }
+            item {
+                StatTile(
+                    label = strings.intake,
+                    metricText = mealMath.calories.toString(),
+                    detail = strings.food
+                )
             }
             item { BurnBreakdownCard(burn = burnMath, strings = strings) }
         }

@@ -156,7 +156,21 @@ data class CalorieCoreStrings(
     val phoneStepsStarting: String = "Starting...",
     val stepPermissionNeeded: String = "Allow activity access to track steps.",
     val stepCounterUnavailable: String = "Step tracking is not available.",
-    val stepCounterError: String = "Could not start. Try again."
+    val stepCounterError: String = "Could not start. Try again.",
+    val activity: String,
+    val loggedActivity: String,
+    val addActivity: String,
+    val updateActivity: String,
+    val searchActivity: String,
+    val activityList: String,
+    val otherActivity: String,
+    val otherActivityName: String,
+    val minutes: String,
+    val estimatedBurn: String,
+    val weightUsed: String,
+    val noActivities: String,
+    val activityDoubleCountWarning: String,
+    val activityCatalogSource: String
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today
