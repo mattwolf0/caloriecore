@@ -55,6 +55,15 @@ fun SettingsScreen(
     var isLanguageDialogOpen by rememberSaveable { mutableStateOf(false) }
     var isThemeDialogOpen by rememberSaveable { mutableStateOf(false) }
     var isResetDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var showLegalInfo by rememberSaveable { mutableStateOf(false) }
+
+    if (showLegalInfo) {
+        LegalInfoScreen(
+            strings = strings,
+            onBack = { showLegalInfo = false }
+        )
+        return
+    }
 
     if (isLanguageDialogOpen) {
         LanguagePickerDialog(
@@ -131,6 +140,14 @@ fun SettingsScreen(
                 SettingsPickerRow(
                     label = strings.theme,
                     value = strings.themeDisplayName(logbook.settings.themeMode)
+                )
+            }
+        }
+        item {
+            ClickableLogCard(onClick = { showLegalInfo = true }) {
+                SettingsPickerRow(
+                    label = strings.legalAndDataSources,
+                    value = strings.view
                 )
             }
         }

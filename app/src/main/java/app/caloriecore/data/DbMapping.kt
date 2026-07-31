@@ -18,7 +18,16 @@ internal fun ContentValues.putNullable(column: String, maybeCount: Int?) {
     if (maybeCount == null) putNull(column) else put(column, maybeCount)
 }
 
+internal fun ContentValues.putNullable(column: String, maybeText: String?) {
+    if (maybeText == null) putNull(column) else put(column, maybeText)
+}
+
 internal fun Cursor.string(column: String): String = getString(getColumnIndexOrThrow(column))
+
+internal fun Cursor.nullableString(column: String): String? {
+    val index = getColumnIndexOrThrow(column)
+    return if (isNull(index)) null else getString(index)
+}
 
 internal fun Cursor.int(column: String): Int = getInt(getColumnIndexOrThrow(column))
 

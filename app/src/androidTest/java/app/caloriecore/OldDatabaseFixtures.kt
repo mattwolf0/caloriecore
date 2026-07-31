@@ -158,4 +158,17 @@ fun makeOldVersionThreeDatabase(context: Context) {
     }
 }
 
+fun makeVersionFiveDatabase(context: Context) {
+    makeOldVersionThreeDatabase(context)
+    val db = context.openOrCreateDatabase(DatabaseName, Context.MODE_PRIVATE, null)
+    try {
+        db.execSQL("ALTER TABLE meals ADD COLUMN protein_known INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE meals ADD COLUMN carb_known INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE meals ADD COLUMN fat_known INTEGER NOT NULL DEFAULT 1")
+        db.version = 5
+    } finally {
+        db.close()
+    }
+}
+
 const val DatabaseName = "calorie_core.db"

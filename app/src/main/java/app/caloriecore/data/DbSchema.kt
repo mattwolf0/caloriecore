@@ -111,6 +111,7 @@ internal fun createTables(db: SQLiteDatabase) {
         )
         """.trimIndent()
     )
+    createActivityEntriesTable(db)
     db.execSQL(
         """
         CREATE TABLE IF NOT EXISTS session_exercises (
@@ -140,8 +141,27 @@ internal fun createTables(db: SQLiteDatabase) {
     )
 }
 
+internal fun createActivityEntriesTable(db: SQLiteDatabase) {
+    db.execSQL(
+        """
+        CREATE TABLE IF NOT EXISTS activity_entries (
+            id INTEGER PRIMARY KEY,
+            logged_at INTEGER NOT NULL,
+            catalog_code TEXT,
+            name TEXT NOT NULL,
+            source TEXT NOT NULL,
+            duration_minutes INTEGER,
+            met REAL,
+            weight_kg REAL,
+            active_calories INTEGER NOT NULL
+        )
+        """.trimIndent()
+    )
+}
+
 internal fun dropTables(db: SQLiteDatabase) {
     listOf(
+        "activity_entries",
         "exercise_sets",
         "session_exercises",
         "workout_sessions",

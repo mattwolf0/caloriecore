@@ -2,7 +2,10 @@ package app.caloriecore
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import app.caloriecore.data.ActivityCatalogStore
 import app.caloriecore.data.LogbookRepository
+import app.caloriecore.ui.model.ActivityEntry
+import app.caloriecore.ui.model.ActivitySource
 import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.FoodEntry
 import app.caloriecore.ui.model.Logbook
@@ -83,6 +86,16 @@ class LogbookRepositoryInstrumentedTest {
                     )
                 )
             )
+            val cycling = ActivityEntry(
+                loggedAt = loggedAt,
+                catalogCode = "01014",
+                name = "Cycling",
+                source = ActivitySource.Compendium,
+                durationMinutes = 30,
+                met = 7.0,
+                weightKg = 84.0,
+                activeCalories = 265
+            )
 
             repository.save(
                 Logbook(
@@ -90,6 +103,7 @@ class LogbookRepositoryInstrumentedTest {
                     profile = bodySnapshot,
                     bodyHistory = listOf(bodySnapshot),
                     foodEntries = listOf(riceBowl),
+                    activityEntries = listOf(cycling),
                     trainingSessions = listOf(pressSession),
                     trainingPlans = listOf(mondayPressPlan)
                 )
@@ -103,6 +117,10 @@ class LogbookRepositoryInstrumentedTest {
             assertEquals(18.0, savedLogbook.bodyHistory.first().bodyFatPercent ?: 0.0, 0.0)
             assertEquals(listOf("Rice bowl"), savedLogbook.foodEntries.map { it.name })
             assertFalse(savedLogbook.foodEntries.single().fatKnown)
+            assertEquals(listOf("Cycling"), savedLogbook.activityEntries.map { it.name })
+            assertEquals(7.0, savedLogbook.activityEntries.single().met ?: 0.0, 0.0)
+            assertEquals(84.0, savedLogbook.activityEntries.single().weightKg ?: 0.0, 0.0)
+            assertEquals(265, savedLogbook.activityEntries.single().activeCalories)
             assertEquals(listOf("Monday press"), savedLogbook.trainingPlans.map { it.title })
             assertEquals(3, savedLogbook.trainingPlans.first().exercises.first().plannedSets.first().setCount)
             assertEquals(10, savedLogbook.trainingPlans.first().exercises.first().plannedSets.first().reps)
@@ -117,6 +135,61 @@ class LogbookRepositoryInstrumentedTest {
                 0.0
             )
             assertTrue(savedLogbook.trainingPlans.none { it.title in setOf("Push Pull Legs", "Full Body 3", "Upper Lower") })
+        } finally {
+            context.deleteDatabase(DatabaseName)
+        }
+    }
+
+    @Test
+    fun readsFullActivityCatalog() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        val catalog = ActivityCatalogStore(context).readCatalog()
+
+        assertEquals("2024 Adult Compendium", catalog.version)
+        assertEquals(1111, catalog.items.size)
+        assertEquals(catalog.items.size, catalog.items.map { it.code }.distinct().size)
+        assertTrue(catalog.items.all { it.code.isNotBlank() && it.met.isFinite() && it.met > 0.0 })
+        assertTrue(catalog.items.filter { it.common }.all { it.nameHu != null && it.nameDe != null })
+    }
+
+    @Test
+    fun migratesVersionFiveAndKeepsOldData() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        context.deleteDatabase(DatabaseName)
+        try {
+            makeVersionFiveDatabase(context)
+
+            val migratedLogbook = LogbookRepository(context).load()
+
+            assertEquals(listOf("Old meal"), migratedLogbook.foodEntries.map { it.name })
+            assertTrue(migratedLogbook.activityEntries.isEmpty())
+        } finally {
+            context.deleteDatabase(DatabaseName)
+        }
+    }
+
+    @Test
+    fun resetRemovesActivityEntries() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        context.deleteDatabase(DatabaseName)
+        try {
+            val repository = LogbookRepository(context)
+            repository.save(
+                Logbook(
+                    activityEntries = listOf(
+                        ActivityEntry(
+                            name = "Moving boxes",
+                            source = ActivitySource.Manual,
+                            activeCalories = 180
+                        )
+                    )
+                )
+            )
+
+            repository.save(repository.load().copy(activityEntries = emptyList()))
+
+            assertTrue(repository.load().activityEntries.isEmpty())
         } finally {
             context.deleteDatabase(DatabaseName)
         }

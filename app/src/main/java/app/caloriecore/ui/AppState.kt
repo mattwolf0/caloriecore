@@ -7,12 +7,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import app.caloriecore.data.LogbookRepository
+import app.caloriecore.ui.model.ActivityCatalog
+import app.caloriecore.ui.model.ActivityEntry
 import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.FoodEntry
 import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.TrainingPlan
 import app.caloriecore.ui.model.TrainingSession
 import app.caloriecore.ui.model.UserPreferences
+import app.caloriecore.ui.model.canBeSaved
 import app.caloriecore.ui.model.putById
 import app.caloriecore.ui.model.withBodyCheckIn
 import app.caloriecore.ui.model.withPickedMoment
@@ -32,8 +35,15 @@ class AppState internal constructor(
     var logbook by mutableStateOf<Logbook?>(null)
         private set
 
+    var activityCatalog by mutableStateOf<ActivityCatalog?>(null)
+        private set
+
     suspend fun load() {
-        logbook = withContext(Dispatchers.IO) { repository.load() }
+        val loaded = withContext(Dispatchers.IO) {
+            repository.load() to repository.loadActivityCatalog()
+        }
+        activityCatalog = loaded.second
+        logbook = loaded.first
     }
 
     fun jumpToMoment(nextDateTime: Long) {
@@ -61,6 +71,27 @@ class AppState internal constructor(
         saveChanges(
             current.copy(
                 foodEntries = current.foodEntries.filterNot { it.id == id }
+            )
+        )
+    }
+
+    fun saveActivity(entry: ActivityEntry) {
+        if (!entry.canBeSaved()) return
+        val current = logbook ?: return
+        saveChanges(
+            current.copy(
+                activityEntries = current.activityEntries
+                    .putById(entry.id, entry) { it.id }
+                    .sortedByDescending { it.loggedAt }
+            )
+        )
+    }
+
+    fun deleteActivity(id: Long) {
+        val current = logbook ?: return
+        saveChanges(
+            current.copy(
+                activityEntries = current.activityEntries.filterNot { it.id == id }
             )
         )
     }

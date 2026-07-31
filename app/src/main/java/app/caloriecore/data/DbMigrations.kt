@@ -17,6 +17,7 @@ internal fun upgradeDatabase(db: SQLiteDatabase, oldVersion: Int, newVersion: In
         if (oldVersion < 3) migrateToVersion3(db)
         if (oldVersion < 4) migrateToVersion4(db)
         if (oldVersion < 5) migrateToVersion5(db)
+        if (oldVersion < 6) createActivityEntriesTable(db)
     }
 }
 
