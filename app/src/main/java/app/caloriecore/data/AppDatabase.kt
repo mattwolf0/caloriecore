@@ -11,7 +11,7 @@ import app.caloriecore.ui.model.nearestBodyCheckIn
 import app.caloriecore.ui.model.phoneNowMillis
 
 internal const val DbName = "calorie_core.db"
-internal const val DbVersion = 5
+internal const val DbVersion = 6
 internal const val DbTag = "AppDb"
 
 internal class AppDatabase(context: Context) :
@@ -41,6 +41,7 @@ internal class AppDatabase(context: Context) :
             profile = selectedBodySnapshot,
             bodyHistory = bodySnapshots,
             foodEntries = FoodStore(db).readFoodEntries(),
+            activityEntries = ActivityStore(db).readEntries(),
             trainingSessions = TrainingStore(db).readTrainingSessionLogs(),
             trainingPlans = TrainingStore(db).readTrainingPlans(),
             settings = SettingsStore(db).readSettings()
@@ -54,10 +55,12 @@ internal class AppDatabase(context: Context) :
             SettingsStore(this).insertSettings(logbook.settings)
             val bodyStore = BodyStore(this)
             val foodStore = FoodStore(this)
+            val activityStore = ActivityStore(this)
             val trainingStore = TrainingStore(this)
 
             logbook.bodyHistory.forEach { bodyStore.insertBodySnapshot(it) }
             logbook.foodEntries.forEach { foodStore.insertFoodEntry(it) }
+            logbook.activityEntries.forEach { activityStore.insertEntry(it) }
             logbook.trainingPlans.forEach { trainingStore.insertTrainingPlan(it) }
             logbook.trainingSessions.forEach { trainingStore.insertTrainingSessionLog(it) }
         }
@@ -65,6 +68,7 @@ internal class AppDatabase(context: Context) :
 
     private fun clearUserData(db: SQLiteDatabase) {
         listOf(
+            "activity_entries",
             "exercise_sets",
             "session_exercises",
             "workout_sessions",

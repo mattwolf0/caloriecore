@@ -7,6 +7,7 @@ data class Logbook(
     val profile: BodySnapshot = BodySnapshot(loggedAt = selectedDateTime),
     val bodyHistory: List<BodySnapshot> = listOf(profile),
     val foodEntries: List<FoodEntry> = emptyList(),
+    val activityEntries: List<ActivityEntry> = emptyList(),
     val trainingSessions: List<TrainingSession> = emptyList(),
     val trainingPlans: List<TrainingPlan> = emptyList(),
     val settings: UserPreferences = UserPreferences()
@@ -46,6 +47,9 @@ fun Logbook.withBodyCheckIn(nextProfile: BodySnapshot): Logbook {
 }
 
 fun Logbook.foodRowsForPickedDay(): List<FoodEntry> = mealsOnPhoneDay(foodEntries, selectedDateTime)
+
+fun Logbook.activityRowsForPickedDay(): List<ActivityEntry> =
+    activitiesOnPhoneDay(activityEntries, selectedDateTime)
 
 fun Logbook.gymRowsForPickedDay(): List<TrainingSession> =
     gymLogsOnPhoneDay(trainingSessions, selectedDateTime)
