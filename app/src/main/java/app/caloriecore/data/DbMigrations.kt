@@ -10,7 +10,7 @@ internal fun upgradeDatabase(db: SQLiteDatabase, oldVersion: Int, newVersion: In
         val legacyJsonPayload = LegacyLogbookImport(db).readPayload()
         dropTables(db)
         createTables(db)
-        SettingsStore(db).insertSettings(UserPreferences())
+        SettingsStore(db).insertSettings(UserPreferences(profileSetupComplete = true))
         legacyJsonPayload?.let { LegacyLogbookImport(db).importPayload(it) }
         migrateToVersion4(db)
     } else {
@@ -18,6 +18,7 @@ internal fun upgradeDatabase(db: SQLiteDatabase, oldVersion: Int, newVersion: In
         if (oldVersion < 4) migrateToVersion4(db)
         if (oldVersion < 5) migrateToVersion5(db)
         if (oldVersion < 6) createActivityEntriesTable(db)
+        if (oldVersion < 7) migrateToVersion7(db)
     }
 }
 
@@ -48,4 +49,8 @@ private fun migrateToVersion5(db: SQLiteDatabase) {
     db.execSQL("ALTER TABLE meals ADD COLUMN protein_known INTEGER NOT NULL DEFAULT 1")
     db.execSQL("ALTER TABLE meals ADD COLUMN carb_known INTEGER NOT NULL DEFAULT 1")
     db.execSQL("ALTER TABLE meals ADD COLUMN fat_known INTEGER NOT NULL DEFAULT 1")
+}
+
+private fun migrateToVersion7(db: SQLiteDatabase) {
+    db.execSQL("ALTER TABLE settings ADD COLUMN profile_setup_complete INTEGER NOT NULL DEFAULT 1")
 }

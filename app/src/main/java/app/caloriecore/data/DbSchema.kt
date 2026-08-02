@@ -8,7 +8,8 @@ internal fun createTables(db: SQLiteDatabase) {
         CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             language TEXT NOT NULL,
-            theme_mode TEXT NOT NULL
+            theme_mode TEXT NOT NULL,
+            profile_setup_complete INTEGER NOT NULL DEFAULT 0
         )
         """.trimIndent()
     )
