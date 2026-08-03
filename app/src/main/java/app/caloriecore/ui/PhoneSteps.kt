@@ -101,7 +101,7 @@ internal class PhoneStepsController(
 
 @SuppressLint("InlinedApi")
 @Composable
-internal fun rememberPhoneSteps(): PhoneStepsControl {
+internal fun rememberPhoneSteps(enabled: Boolean = true): PhoneStepsControl {
     val context = LocalContext.current.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
     val phoneStepCounter = remember { PhoneStepCounter(context) }
@@ -127,8 +127,8 @@ internal fun rememberPhoneSteps(): PhoneStepsControl {
         }
     }
 
-    LaunchedEffect(appStarted) {
-        if (appStarted) {
+    LaunchedEffect(appStarted, enabled) {
+        if (appStarted && enabled) {
             val hasPermission = context.canReadPhoneSteps()
             controller.start(hasPermission)
             if (
@@ -142,8 +142,8 @@ internal fun rememberPhoneSteps(): PhoneStepsControl {
         }
     }
 
-    LaunchedEffect(appStarted, controller.state.status) {
-        while (appStarted) {
+    LaunchedEffect(appStarted, enabled, controller.state.status) {
+        while (appStarted && enabled) {
             when (controller.state.status) {
                 PhoneStepStatus.Active -> {
                     delay(StepRefreshMillis)

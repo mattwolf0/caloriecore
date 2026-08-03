@@ -22,7 +22,8 @@ fun NumberInput(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     suffix: String? = null,
-    allowDecimal: Boolean = false
+    allowDecimal: Boolean = false,
+    isError: Boolean = false
 ) {
     OutlinedTextField(
         modifier = modifier.fillMaxWidth(),
@@ -30,6 +31,7 @@ fun NumberInput(
         onValueChange = onValueChange,
         label = { Text(label) },
         singleLine = true,
+        isError = isError,
         suffix = suffix?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = if (allowDecimal) KeyboardType.Decimal else KeyboardType.Number)
     )

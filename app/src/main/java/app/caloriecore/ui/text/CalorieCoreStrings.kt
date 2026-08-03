@@ -24,6 +24,7 @@ data class CalorieCoreStrings(
     val profileData: String,
     val saved: String,
     val breakdown: String,
+    val gender: String,
     val age: String,
     val height: String,
     val weight: String,
@@ -184,7 +185,13 @@ data class CalorieCoreStrings(
     val calorieApiLegalText: String,
     val androidLibrariesLegalText: String,
     val kotlinLegalText: String,
-    val googleServicesLegalText: String
+    val googleServicesLegalText: String,
+    val profileSetupTitle: String = "Set up your profile",
+    val profileSetupIntro: String = "We use these details to estimate your daily calorie burn. You can change them later.",
+    val profileSetupRequired: String = "Fields marked with * are required.",
+    val profileSetupBodyFatHint: String = "Body fat is optional. Add it if you know it.",
+    val profileSetupInvalid: String = "Check the entered values.",
+    val profileSetupContinue: String = "Save and continue"
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today
