@@ -26,6 +26,7 @@ import app.caloriecore.ui.model.phoneNowMillis
 import app.caloriecore.ui.model.samePhoneDay
 import app.caloriecore.ui.navigation.CalorieCoreTab
 import app.caloriecore.ui.screens.FoodScreen
+import app.caloriecore.ui.screens.ProfileSetupScreen
 import app.caloriecore.ui.screens.ProgressScreen
 import app.caloriecore.ui.screens.SettingsScreen
 import app.caloriecore.ui.screens.TodayScreen
@@ -41,7 +42,9 @@ fun CalorieCoreApp() {
     val appState = rememberAppState(
         repository = remember { LogbookRepository(context) }
     )
-    val phoneSteps = rememberPhoneSteps()
+    val phoneSteps = rememberPhoneSteps(
+        enabled = appState.logbook?.settings?.profileSetupComplete == true
+    )
     var currentTab by rememberSaveable { mutableStateOf(CalorieCoreTab.Today) }
     var lastStepSaveAt by remember { mutableLongStateOf(0L) }
 
@@ -82,61 +85,75 @@ fun CalorieCoreApp() {
                 FirstLoadSpinner()
             } else {
                 val strings = calorieCoreStrings(logbook.settings.language)
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = Color.Transparent,
-                    bottomBar = {
-                        BottomDock(
-                            currentTab = currentTab,
-                            tabLabel = strings::dockLabel,
-                            onSelect = { currentTab = it }
+                if (!logbook.settings.profileSetupComplete) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = Color.Transparent
+                    ) { innerPadding ->
+                        ProfileSetupScreen(
+                            selectedDateTime = logbook.selectedDateTime,
+                            strings = strings,
+                            onComplete = appState::completeProfileSetup,
+                            modifier = Modifier.padding(innerPadding)
                         )
                     }
-                ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        when (currentTab) {
-                            CalorieCoreTab.Today -> TodayScreen(
-                                logbook = logbook,
-                                strings = strings,
-                                onSelectedDateTimeChange = appState::jumpToMoment,
-                                onProfileChange = appState::saveBodyEntry,
-                                phoneStepState = phoneSteps.state
+                } else {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = Color.Transparent,
+                        bottomBar = {
+                            BottomDock(
+                                currentTab = currentTab,
+                                tabLabel = strings::dockLabel,
+                                onSelect = { currentTab = it }
                             )
+                        }
+                    ) { innerPadding ->
+                        Box(modifier = Modifier.padding(innerPadding)) {
+                            when (currentTab) {
+                                CalorieCoreTab.Today -> TodayScreen(
+                                    logbook = logbook,
+                                    strings = strings,
+                                    onSelectedDateTimeChange = appState::jumpToMoment,
+                                    onProfileChange = appState::saveBodyEntry,
+                                    phoneStepState = phoneSteps.state
+                                )
 
-                            CalorieCoreTab.Food -> FoodScreen(
-                                logbook = logbook,
-                                strings = strings,
-                                onSelectedDateTimeChange = appState::jumpToMoment,
-                                onSaveFoodEntry = appState::saveMeal,
-                                onRemoveFoodEntry = appState::deleteMeal
-                            )
+                                CalorieCoreTab.Food -> FoodScreen(
+                                    logbook = logbook,
+                                    strings = strings,
+                                    onSelectedDateTimeChange = appState::jumpToMoment,
+                                    onSaveFoodEntry = appState::saveMeal,
+                                    onRemoveFoodEntry = appState::deleteMeal
+                                )
 
-                            CalorieCoreTab.Train -> TrainScreen(
-                                logbook = logbook,
-                                strings = strings,
-                                onSelectedDateTimeChange = appState::jumpToMoment,
-                                activityCatalog = appState.activityCatalog?.items.orEmpty(),
-                                activityLanguage = resolveCalorieCoreLanguage(logbook.settings.language),
-                                onSaveActivity = appState::saveActivity,
-                                onRemoveActivity = appState::deleteActivity,
-                                onSavePlan = appState::savePlan,
-                                onRemovePlan = appState::deletePlan,
-                                onSaveSession = appState::saveWorkout,
-                                onRemoveSession = appState::deleteWorkout
-                            )
+                                CalorieCoreTab.Train -> TrainScreen(
+                                    logbook = logbook,
+                                    strings = strings,
+                                    onSelectedDateTimeChange = appState::jumpToMoment,
+                                    activityCatalog = appState.activityCatalog?.items.orEmpty(),
+                                    activityLanguage = resolveCalorieCoreLanguage(logbook.settings.language),
+                                    onSaveActivity = appState::saveActivity,
+                                    onRemoveActivity = appState::deleteActivity,
+                                    onSavePlan = appState::savePlan,
+                                    onRemovePlan = appState::deletePlan,
+                                    onSaveSession = appState::saveWorkout,
+                                    onRemoveSession = appState::deleteWorkout
+                                )
 
-                            CalorieCoreTab.Progress -> ProgressScreen(
-                                logbook = logbook,
-                                strings = strings,
-                                onSelectedDateTimeChange = appState::jumpToMoment
-                            )
+                                CalorieCoreTab.Progress -> ProgressScreen(
+                                    logbook = logbook,
+                                    strings = strings,
+                                    onSelectedDateTimeChange = appState::jumpToMoment
+                                )
 
-                            CalorieCoreTab.Settings -> SettingsScreen(
-                                logbook = logbook,
-                                strings = strings,
-                                onSettingsChange = appState::saveSettings,
-                                onReset = appState::resetLogbook
-                            )
+                                CalorieCoreTab.Settings -> SettingsScreen(
+                                    logbook = logbook,
+                                    strings = strings,
+                                    onSettingsChange = appState::saveSettings,
+                                    onReset = appState::resetLogbook
+                                )
+                            }
                         }
                     }
                 }

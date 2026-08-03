@@ -55,6 +55,18 @@ class AppState internal constructor(
         saveChanges(current.withBodyCheckIn(profile))
     }
 
+    fun completeProfileSetup(profile: BodySnapshot) {
+        val current = logbook ?: return
+        val savedProfile = profile.copy(loggedAt = current.selectedDateTime)
+        saveChanges(
+            current.copy(
+                profile = savedProfile,
+                bodyHistory = listOf(savedProfile),
+                settings = current.settings.copy(profileSetupComplete = true)
+            )
+        )
+    }
+
     fun saveMeal(meal: FoodEntry) {
         val current = logbook ?: return
         saveChanges(

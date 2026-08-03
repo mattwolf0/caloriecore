@@ -36,7 +36,8 @@ internal class LegacyLogbookImport(private val db: SQLiteDatabase) {
                 settingsStore.insertSettings(
                     UserPreferences(
                         language = enumValue(settings.optString("language"), UiLanguage.System),
-                        themeMode = enumValue(settings.optString("themeMode"), UiThemeMode.System)
+                        themeMode = enumValue(settings.optString("themeMode"), UiThemeMode.System),
+                        profileSetupComplete = true
                     )
                 )
             }

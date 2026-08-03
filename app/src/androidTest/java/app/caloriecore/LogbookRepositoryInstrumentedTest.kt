@@ -17,6 +17,7 @@ import app.caloriecore.ui.model.TrainingPlanExercise
 import app.caloriecore.ui.model.TrainingSession
 import app.caloriecore.ui.model.UiLanguage
 import app.caloriecore.ui.model.UiThemeMode
+import app.caloriecore.ui.model.UserPreferences
 import app.caloriecore.ui.model.parseLogMoment
 import app.caloriecore.ui.model.startSheetFor
 import org.junit.Assert.assertEquals
@@ -27,6 +28,19 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class LogbookRepositoryInstrumentedTest {
+    @Test
+    fun newInstallNeedsProfileSetup() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        context.deleteDatabase(DatabaseName)
+        try {
+            val logbook = LogbookRepository(context).load()
+
+            assertFalse(logbook.settings.profileSetupComplete)
+        } finally {
+            context.deleteDatabase(DatabaseName)
+        }
+    }
+
     @Test
     fun savesAndLoadsLocalData() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -105,7 +119,8 @@ class LogbookRepositoryInstrumentedTest {
                     foodEntries = listOf(riceBowl),
                     activityEntries = listOf(cycling),
                     trainingSessions = listOf(pressSession),
-                    trainingPlans = listOf(mondayPressPlan)
+                    trainingPlans = listOf(mondayPressPlan),
+                    settings = UserPreferences(profileSetupComplete = true)
                 )
             )
 
@@ -113,6 +128,7 @@ class LogbookRepositoryInstrumentedTest {
 
             assertEquals(UiLanguage.System, savedLogbook.settings.language)
             assertEquals(UiThemeMode.System, savedLogbook.settings.themeMode)
+            assertTrue(savedLogbook.settings.profileSetupComplete)
             assertEquals(1, savedLogbook.bodyHistory.size)
             assertEquals(18.0, savedLogbook.bodyHistory.first().bodyFatPercent ?: 0.0, 0.0)
             assertEquals(listOf("Rice bowl"), savedLogbook.foodEntries.map { it.name })
@@ -206,6 +222,7 @@ class LogbookRepositoryInstrumentedTest {
 
             assertEquals(UiLanguage.System, migratedLogbook.settings.language)
             assertEquals(UiThemeMode.System, migratedLogbook.settings.themeMode)
+            assertTrue(migratedLogbook.settings.profileSetupComplete)
             assertTrue(migratedLogbook.foodEntries.single().proteinKnown)
             assertTrue(migratedLogbook.foodEntries.single().carbsKnown)
             assertTrue(migratedLogbook.foodEntries.single().fatKnown)
