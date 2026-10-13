@@ -71,11 +71,7 @@ internal fun LegalInfoScreen(strings: CalorieCoreStrings, onBack: () -> Unit) {
 }
 
 @Composable
-private fun LegalNoticeCard(
-    notice: LegalNotice,
-    openText: String,
-    onOpen: () -> Unit
-) {
+private fun LegalNoticeCard(notice: LegalNotice, openText: String, onOpen: () -> Unit) {
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(

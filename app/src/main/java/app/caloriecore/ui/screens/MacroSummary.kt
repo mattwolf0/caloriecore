@@ -17,11 +17,7 @@ import app.caloriecore.ui.model.NutritionTotals
 import app.caloriecore.ui.text.CalorieCoreStrings
 
 @Composable
-internal fun FoodMacroSummary(
-    nutrition: NutritionTotals,
-    hasMissingMacros: Boolean,
-    strings: CalorieCoreStrings
-) {
+internal fun FoodMacroSummary(nutrition: NutritionTotals, hasMissingMacros: Boolean, strings: CalorieCoreStrings) {
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             ShelfHeader(

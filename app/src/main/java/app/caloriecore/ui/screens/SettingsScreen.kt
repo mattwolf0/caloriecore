@@ -45,12 +45,7 @@ import app.caloriecore.ui.theme.GymGreen
 import app.caloriecore.ui.theme.WarningRed
 
 @Composable
-fun SettingsScreen(
-    logbook: Logbook,
-    strings: CalorieCoreStrings,
-    onSettingsChange: (UserPreferences) -> Unit,
-    onReset: () -> Unit
-) {
+fun SettingsScreen(logbook: Logbook, strings: CalorieCoreStrings, onSettingsChange: (UserPreferences) -> Unit, onReset: () -> Unit) {
     val settingsDay = logbook.pickedDayReport()
     var isLanguageDialogOpen by rememberSaveable { mutableStateOf(false) }
     var isThemeDialogOpen by rememberSaveable { mutableStateOf(false) }

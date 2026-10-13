@@ -10,5 +10,6 @@ enum class PhoneStepStatus {
 
 data class PhoneStepState(
     val steps: Int = 0,
-    val status: PhoneStepStatus = PhoneStepStatus.Starting
+    val status: PhoneStepStatus = PhoneStepStatus.Starting,
+    val day: String = logDateText(phoneNowMillis())
 )

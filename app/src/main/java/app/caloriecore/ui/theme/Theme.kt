@@ -1,10 +1,10 @@
 package app.caloriecore.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 import app.caloriecore.ui.model.UiThemeMode
 
@@ -47,10 +47,7 @@ private val PaperScheme = lightColorScheme(
 )
 
 @Composable
-fun CalorieCoreTheme(
-    themeMode: UiThemeMode,
-    content: @Composable () -> Unit
-) {
+fun CalorieCoreTheme(themeMode: UiThemeMode, content: @Composable () -> Unit) {
     val useNightPalette = when (themeMode) {
         UiThemeMode.System -> isSystemInDarkTheme()
         UiThemeMode.Light -> false

@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import app.caloriecore.ui.model.LoggedExercise
 import app.caloriecore.ui.model.TrainingPlan
 import app.caloriecore.ui.model.TrainingSession
+import app.caloriecore.ui.model.canBeSaved
 import app.caloriecore.ui.model.newLogId
 import app.caloriecore.ui.model.startSheetFor
 
@@ -18,13 +19,15 @@ internal class WorkoutDraft internal constructor(
     private val startedPlanIdState: MutableState<Long?>,
     private val workoutLoggedAtState: MutableState<Long>,
     private val workoutTitleInputState: MutableState<String>,
-    private val setLogScratchpadState: MutableState<List<LoggedExercise>>
+    private val setLogScratchpadState: MutableState<List<LoggedExercise>>,
+    private val invalidSetIdsState: MutableState<List<Long>> = mutableStateOf(emptyList())
 ) {
     var openWorkoutId by openWorkoutIdState
     var startedPlanId by startedPlanIdState
     var workoutLoggedAt by workoutLoggedAtState
     var workoutTitleInput by workoutTitleInputState
     var setLogScratchpad by setLogScratchpadState
+    private var invalidSetIds by invalidSetIdsState
 
     val isOpen: Boolean
         get() = openWorkoutId != null || startedPlanId != null || setLogScratchpad.isNotEmpty()
@@ -33,10 +36,13 @@ internal class WorkoutDraft internal constructor(
         get() = openWorkoutId != null
 
     val canSave: Boolean
-        get() = workoutTitleInput.isNotBlank() && setLogScratchpad.isNotEmpty()
+        get() = workoutTitleInput.isNotBlank() && setLogScratchpad.isNotEmpty() &&
+            setLogScratchpad.any { it.sets.isNotEmpty() } && setLogScratchpad.all { exercise ->
+                exercise.name.isNotBlank() && exercise.sets.all { it.canBeSaved() && it.id !in invalidSetIds }
+            }
 
     fun followSelectedMoment(selectedDateTime: Long) {
-        if (openWorkoutId == null) workoutLoggedAt = selectedDateTime
+        if (!isOpen) workoutLoggedAt = selectedDateTime
     }
 
     fun close(selectedDateTime: Long) {
@@ -45,16 +51,17 @@ internal class WorkoutDraft internal constructor(
         workoutLoggedAt = selectedDateTime
         workoutTitleInput = ""
         setLogScratchpad = emptyList()
+        invalidSetIds = emptyList()
     }
 
     fun startFromPlan(plan: TrainingPlan, selectedDateTime: Long) {
-        // Keep the copied plan values on the workout.
         val startSheet = plan.startSheetFor(selectedDateTime)
         openWorkoutId = null
         startedPlanId = plan.id
         workoutLoggedAt = startSheet.loggedAt
         workoutTitleInput = startSheet.title
         setLogScratchpad = startSheet.exercises
+        invalidSetIds = emptyList()
     }
 
     fun reopen(session: TrainingSession) {
@@ -63,6 +70,7 @@ internal class WorkoutDraft internal constructor(
         workoutLoggedAt = session.loggedAt
         workoutTitleInput = session.title
         setLogScratchpad = session.exercises
+        invalidSetIds = emptyList()
     }
 
     fun updateExercise(next: LoggedExercise) {
@@ -71,6 +79,10 @@ internal class WorkoutDraft internal constructor(
 
     fun removeExercise(exerciseId: Long) {
         setLogScratchpad = setLogScratchpad.filterNot { it.id == exerciseId }
+    }
+
+    fun setInputValid(setId: Long, valid: Boolean) {
+        invalidSetIds = if (valid) invalidSetIds - setId else (invalidSetIds + setId).distinct()
     }
 
     fun buildSession(): TrainingSession {
@@ -97,7 +109,8 @@ internal fun rememberWorkoutDraft(selectedDateTime: Long): WorkoutDraft {
     val startedPlanId = rememberSaveable { mutableStateOf<Long?>(null) }
     val workoutLoggedAt = rememberSaveable { mutableStateOf(selectedDateTime) }
     val workoutTitleInput = rememberSaveable { mutableStateOf("") }
-    val setLogScratchpad = remember { mutableStateOf(emptyList<LoggedExercise>()) }
+    val setLogScratchpad = rememberSaveable { mutableStateOf(emptyList<LoggedExercise>()) }
+    val invalidSetIds = rememberSaveable { mutableStateOf(emptyList<Long>()) }
 
     return remember {
         WorkoutDraft(
@@ -105,7 +118,8 @@ internal fun rememberWorkoutDraft(selectedDateTime: Long): WorkoutDraft {
             startedPlanId,
             workoutLoggedAt,
             workoutTitleInput,
-            setLogScratchpad
+            setLogScratchpad,
+            invalidSetIds
         )
     }
 }

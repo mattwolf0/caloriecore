@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
-import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.components.ShelfHeader
+import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.FoodProduct
 import app.caloriecore.ui.text.CalorieCoreStrings

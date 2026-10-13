@@ -39,8 +39,11 @@ internal class CalorieApiClient {
                     val body = connection.inputStream.bufferedReader().use { it.readText() }
                     parseFood(JSONObject(body), barcode)
                 }
+
                 HttpURLConnection.HTTP_NOT_FOUND -> error(FoodFactsClient.NotFound)
+
                 TooManyRequests -> error(RateLimited)
+
                 else -> error(Unavailable)
             }
         } finally {

@@ -19,13 +19,14 @@ import androidx.compose.ui.unit.dp
 import app.caloriecore.data.FoodBarcodeReader
 import app.caloriecore.data.FoodFactsClient
 import app.caloriecore.ui.components.ConfirmActionDialog
-import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.DayPicker
+import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.SolidActionButton
-import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.FoodEntry
+import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.foodRowsForPickedDay
+import app.caloriecore.ui.model.newEntryMoment
 import app.caloriecore.ui.model.pickedDayReport
 import app.caloriecore.ui.text.CalorieCoreStrings
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ fun FoodScreen(
     val foodFacts = remember { FoodFactsClient() }
     val foodScreenScope = rememberCoroutineScope()
 
-    var lookupBusy by rememberSaveable { mutableStateOf(false) }
+    var lookupBusy by remember { mutableStateOf(false) }
     var isEditorOpen by rememberSaveable { mutableStateOf(false) }
     var deleteMealId by rememberSaveable { mutableStateOf<Long?>(null) }
 
@@ -66,17 +67,6 @@ fun FoodScreen(
 
     LaunchedEffect(logbook.selectedDateTime) {
         editor.followSelectedMoment(logbook.selectedDateTime)
-    }
-
-    LaunchedEffect(
-        editor.draft.grams,
-        editor.draft.keepsProductPer100Base,
-        editor.draft.productKcalPer100g,
-        editor.draft.productProteinPer100g,
-        editor.draft.productCarbsPer100g,
-        editor.draft.productFatPer100g
-    ) {
-        editor.refreshProductTotals()
     }
 
     fun fetchScannedFood(code: String) {
@@ -174,7 +164,7 @@ fun FoodScreen(
                 SolidActionButton(
                     text = strings.addMeal,
                     onClick = {
-                        editor.clear(logbook.selectedDateTime)
+                        editor.clear(newEntryMoment(logbook.selectedDateTime))
                         isEditorOpen = true
                     }
                 )

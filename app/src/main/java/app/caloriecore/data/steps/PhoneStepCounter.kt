@@ -7,15 +7,15 @@ import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Build
-import androidx.core.content.edit
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import app.caloriecore.ui.model.logDateText
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.fitness.FitnessLocal
 import com.google.android.gms.fitness.LocalRecordingClient
 import com.google.android.gms.fitness.data.LocalDataType
 import com.google.android.gms.fitness.request.LocalDataReadRequest
-import app.caloriecore.ui.model.logDateText
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
@@ -107,7 +107,7 @@ internal class PhoneStepCounter(context: Context) : StepCounter {
                             }
                         }
                     val steps = totalStepCount(stepValues)
-                    saveCache(steps)
+                    saveCache(steps, dayStart.toLocalDate().toString())
                     onFinished(Result.success(steps))
                 }
                 .addOnFailureListener { error ->
@@ -118,19 +118,18 @@ internal class PhoneStepCounter(context: Context) : StepCounter {
         }
     }
 
-    private fun saveCache(steps: Int) {
+    private fun saveCache(steps: Int, day: String) {
         settings.edit {
-            putString(CacheDayKey, logDateText(System.currentTimeMillis()))
+            putString(CacheDayKey, day)
             putInt(CacheStepsKey, steps)
         }
     }
 
-    private fun hasActivityPermission(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
-            ContextCompat.checkSelfPermission(
-                appContext,
-                Manifest.permission.ACTIVITY_RECOGNITION
-            ) == PackageManager.PERMISSION_GRANTED
+    private fun hasActivityPermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+        ContextCompat.checkSelfPermission(
+            appContext,
+            Manifest.permission.ACTIVITY_RECOGNITION
+        ) == PackageManager.PERMISSION_GRANTED
 
     private companion object {
         const val SettingsName = "phone_step_settings"

@@ -4,19 +4,25 @@ import android.content.Context
 import app.caloriecore.ui.model.ActivityCatalog
 import app.caloriecore.ui.model.Logbook
 
-class LogbookRepository(context: Context) {
+interface LogbookStore {
+    fun load(): Logbook
+    fun save(logbook: Logbook)
+    fun loadActivityCatalog(): ActivityCatalog
+}
+
+class LogbookRepository(context: Context) : LogbookStore {
     private val db = AppDatabase(context.applicationContext)
     private val activityCatalog = ActivityCatalogStore(context.applicationContext)
 
-    fun load(): Logbook {
-        return db.readLogbook()
-    }
+    override fun load(): Logbook = db.readLogbook()
 
-    fun save(logbook: Logbook) {
+    override fun save(logbook: Logbook) {
         db.saveLogbook(logbook)
     }
 
-    fun loadActivityCatalog(): ActivityCatalog {
-        return activityCatalog.readCatalog()
+    override fun loadActivityCatalog(): ActivityCatalog = activityCatalog.readCatalog()
+
+    fun close() {
+        db.close()
     }
 }

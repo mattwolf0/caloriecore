@@ -70,12 +70,7 @@ internal fun ActivityLogCard(
 }
 
 @Composable
-private fun ActivityRow(
-    entry: ActivityEntry,
-    strings: CalorieCoreStrings,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
+private fun ActivityRow(entry: ActivityEntry, strings: CalorieCoreStrings, onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

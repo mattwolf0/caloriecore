@@ -66,12 +66,7 @@ data class FoodEntry(
     val fatKnown: Boolean = true
 )
 
-data class NutritionTotals(
-    val calories: Int,
-    val protein: Double,
-    val carbs: Double,
-    val fat: Double
-)
+data class NutritionTotals(val calories: Int, val protein: Double, val carbs: Double, val fat: Double)
 
 fun sumPlateMacros(foodEntries: List<FoodEntry>): NutritionTotals = NutritionTotals(
     calories = foodEntries.sumOf { it.calories },
@@ -79,6 +74,10 @@ fun sumPlateMacros(foodEntries: List<FoodEntry>): NutritionTotals = NutritionTot
     carbs = foodEntries.sumOf { it.carbGrams },
     fat = foodEntries.sumOf { it.fatGrams }
 )
+
+fun FoodEntry.canBeSaved(): Boolean = name.isNotBlank() && servingGrams in 1..100_000 &&
+    calories in 0..100_000 && listOf(proteinGrams, carbGrams, fatGrams)
+        .all { it.isFinite() && it in 0.0..100_000.0 }
 
 fun mealsOnPhoneDay(foodEntries: List<FoodEntry>, selectedDateTime: Long): List<FoodEntry> = foodEntries
     .filter { samePhoneDay(it.loggedAt, selectedDateTime) }

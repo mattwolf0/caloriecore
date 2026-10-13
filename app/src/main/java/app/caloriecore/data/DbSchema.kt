@@ -9,7 +9,8 @@ internal fun createTables(db: SQLiteDatabase) {
             id INTEGER PRIMARY KEY CHECK (id = 1),
             language TEXT NOT NULL,
             theme_mode TEXT NOT NULL,
-            profile_setup_complete INTEGER NOT NULL DEFAULT 0
+            profile_setup_complete INTEGER NOT NULL DEFAULT 0,
+            use_phone_steps INTEGER NOT NULL DEFAULT 1
         )
         """.trimIndent()
     )
@@ -28,7 +29,9 @@ internal fun createTables(db: SQLiteDatabase) {
             watch_active_calories INTEGER NOT NULL,
             steps INTEGER NOT NULL,
             planned_workout_calories INTEGER NOT NULL,
-            resting_heart_rate INTEGER NOT NULL
+            resting_heart_rate INTEGER NOT NULL,
+            calorie_source TEXT NOT NULL DEFAULT 'Logs',
+            has_weight_entry INTEGER NOT NULL DEFAULT 1
         )
         """.trimIndent()
     )

@@ -23,7 +23,8 @@ fun NumberInput(
     modifier: Modifier = Modifier,
     suffix: String? = null,
     allowDecimal: Boolean = false,
-    isError: Boolean = false
+    isError: Boolean = false,
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         modifier = modifier.fillMaxWidth(),
@@ -32,6 +33,7 @@ fun NumberInput(
         label = { Text(label) },
         singleLine = true,
         isError = isError,
+        enabled = enabled,
         suffix = suffix?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = if (allowDecimal) KeyboardType.Decimal else KeyboardType.Number)
     )
@@ -51,10 +53,4 @@ fun SolidActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Mo
     }
 }
 
-fun keepLogNumberText(typedNumber: String, allowDecimal: Boolean = false): String {
-    val allowedChars = buildString {
-        append("0123456789")
-        if (allowDecimal) append(".,")
-    }
-    return typedNumber.filter { it in allowedChars }.replace(',', '.')
-}
+fun keepLogNumberText(typedNumber: String): String = typedNumber.filter { it in "0123456789-.," }.replace(',', '.')

@@ -36,8 +36,7 @@ internal class ActivityCatalogStore(private val context: Context) {
         )
     }
 
-    private fun JSONObject.optionalText(name: String): String? =
-        optString(name).trim().takeIf { it.isNotEmpty() }
+    private fun JSONObject.optionalText(name: String): String? = optString(name).trim().takeIf { it.isNotEmpty() }
 
     private companion object {
         const val FileName = "activity_catalog.json"

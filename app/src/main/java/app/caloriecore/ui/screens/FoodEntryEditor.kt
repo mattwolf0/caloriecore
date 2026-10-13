@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -13,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.LogMomentPicker
 import app.caloriecore.ui.components.NumberInput
-import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.components.ShelfHeader
+import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.model.FoodEntry
 import app.caloriecore.ui.text.CalorieCoreStrings
 
@@ -75,6 +76,9 @@ internal fun FoodEntryEditor(
                     modifier = Modifier.weight(1f),
                     suffix = "kcal"
                 )
+            }
+            if (draft.name.isNotBlank() && !editor.canSave) {
+                Text(strings.profileSetupInvalid, color = MaterialTheme.colorScheme.error)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberInput(

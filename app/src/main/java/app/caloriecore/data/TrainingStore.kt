@@ -110,7 +110,10 @@ internal class TrainingStore(private val db: SQLiteDatabase) {
             put("focus", plan.focus)
             put("days_per_week", plan.daysPerWeek)
         }
-        db.insertWithOnConflict("workout_programs", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        if (db.update("workout_programs", values, "id = ?", arrayOf(plan.id.toString())) == 0) {
+            db.insertOrThrow("workout_programs", null, values)
+        }
+        db.delete("program_exercises", "program_id = ?", arrayOf(plan.id.toString()))
         plan.exercises.forEachIndexed { index, exercise ->
             val exerciseValues = ContentValues().apply {
                 put("id", exercise.id)
@@ -119,7 +122,7 @@ internal class TrainingStore(private val db: SQLiteDatabase) {
                 put("target", exercise.target)
                 put("position", index)
             }
-            db.insertWithOnConflict("program_exercises", null, exerciseValues, SQLiteDatabase.CONFLICT_REPLACE)
+            db.insertOrThrow("program_exercises", null, exerciseValues)
             exercise.plannedSets.forEachIndexed { targetIndex, target ->
                 val targetValues = ContentValues().apply {
                     put("id", target.id)
@@ -129,7 +132,7 @@ internal class TrainingStore(private val db: SQLiteDatabase) {
                     put("weight_kg", target.weightKg)
                     put("position", targetIndex)
                 }
-                db.insertWithOnConflict("program_exercise_targets", null, targetValues, SQLiteDatabase.CONFLICT_REPLACE)
+                db.insertOrThrow("program_exercise_targets", null, targetValues)
             }
         }
     }
@@ -141,7 +144,10 @@ internal class TrainingStore(private val db: SQLiteDatabase) {
             put("title", session.title)
             put("logged_at", session.loggedAt)
         }
-        db.insertWithOnConflict("workout_sessions", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        if (db.update("workout_sessions", values, "id = ?", arrayOf(session.id.toString())) == 0) {
+            db.insertOrThrow("workout_sessions", null, values)
+        }
+        db.delete("session_exercises", "session_id = ?", arrayOf(session.id.toString()))
         session.exercises.forEachIndexed { exerciseIndex, exercise ->
             val exerciseValues = ContentValues().apply {
                 put("id", exercise.id)
@@ -150,7 +156,7 @@ internal class TrainingStore(private val db: SQLiteDatabase) {
                 put("target", exercise.target)
                 put("position", exerciseIndex)
             }
-            db.insertWithOnConflict("session_exercises", null, exerciseValues, SQLiteDatabase.CONFLICT_REPLACE)
+            db.insertOrThrow("session_exercises", null, exerciseValues)
             exercise.sets.forEachIndexed { setIndex, set ->
                 val setValues = ContentValues().apply {
                     put("id", set.id)
@@ -162,7 +168,7 @@ internal class TrainingStore(private val db: SQLiteDatabase) {
                     putNullable("planned_weight_kg", set.plannedWeightKg)
                     put("position", setIndex)
                 }
-                db.insertWithOnConflict("exercise_sets", null, setValues, SQLiteDatabase.CONFLICT_REPLACE)
+                db.insertOrThrow("exercise_sets", null, setValues)
             }
         }
     }

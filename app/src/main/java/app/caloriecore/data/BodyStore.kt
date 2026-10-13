@@ -3,6 +3,7 @@ package app.caloriecore.data
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import app.caloriecore.ui.model.BodySnapshot
+import app.caloriecore.ui.model.CalorieSource
 import app.caloriecore.ui.model.Sex
 
 internal class BodyStore(private val db: SQLiteDatabase) {
@@ -24,7 +25,9 @@ internal class BodyStore(private val db: SQLiteDatabase) {
                 watchActiveCalories = int("watch_active_calories"),
                 steps = int("steps"),
                 plannedWorkoutCalories = int("planned_workout_calories"),
-                restingHeartRate = int("resting_heart_rate")
+                restingHeartRate = int("resting_heart_rate"),
+                calorieSource = enumValue(string("calorie_source"), CalorieSource.Logs),
+                hasWeightEntry = int("has_weight_entry") == 1
             )
         }
     }
@@ -44,7 +47,9 @@ internal class BodyStore(private val db: SQLiteDatabase) {
             put("steps", profile.steps)
             put("planned_workout_calories", profile.plannedWorkoutCalories)
             put("resting_heart_rate", profile.restingHeartRate)
+            put("calorie_source", profile.calorieSource.name)
+            put("has_weight_entry", if (profile.hasWeightEntry) 1 else 0)
         }
-        db.insertWithOnConflict("profile_snapshots", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        check(db.insertWithOnConflict("profile_snapshots", null, values, SQLiteDatabase.CONFLICT_REPLACE) != -1L)
     }
 }

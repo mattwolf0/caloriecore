@@ -26,12 +26,7 @@ import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 
 @Composable
-internal fun PlanBuilder(
-    draft: TrainingPlanDraft,
-    strings: CalorieCoreStrings,
-    onSavePlan: (TrainingPlan) -> Unit,
-    onClose: () -> Unit
-) {
+internal fun PlanBuilder(draft: TrainingPlanDraft, strings: CalorieCoreStrings, onSavePlan: (TrainingPlan) -> Unit, onClose: () -> Unit) {
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             ShelfHeader(if (draft.isEditing) strings.editPlan else strings.createPlan)
@@ -76,7 +71,7 @@ internal fun PlanBuilder(
                 NumberInput(
                     strings.load,
                     draft.plannedLoadInput,
-                    { draft.plannedLoadInput = keepLogNumberText(it, true) },
+                    { draft.plannedLoadInput = keepLogNumberText(it) },
                     Modifier.weight(1f),
                     "kg",
                     true
@@ -84,7 +79,7 @@ internal fun PlanBuilder(
             }
             SolidActionButton(
                 text = strings.addThisExercise,
-                enabled = draft.exerciseNameInput.isNotBlank(),
+                enabled = draft.canAddExercise,
                 onClick = draft::addExercise
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -101,11 +96,7 @@ internal fun PlanBuilder(
 }
 
 @Composable
-private fun TrainingPlanExerciseRow(
-    exercise: TrainingPlanExercise,
-    strings: CalorieCoreStrings,
-    onDelete: () -> Unit
-) {
+private fun TrainingPlanExerciseRow(exercise: TrainingPlanExercise, strings: CalorieCoreStrings, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

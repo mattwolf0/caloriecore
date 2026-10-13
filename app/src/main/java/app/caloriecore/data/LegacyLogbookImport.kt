@@ -3,6 +3,7 @@ package app.caloriecore.data
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import app.caloriecore.ui.model.BodySnapshot
+import app.caloriecore.ui.model.CalorieSource
 import app.caloriecore.ui.model.FoodEntry
 import app.caloriecore.ui.model.LoggedExercise
 import app.caloriecore.ui.model.LoggedSet
@@ -57,7 +58,8 @@ internal class LegacyLogbookImport(private val db: SQLiteDatabase) {
                         watchActiveCalories = profile.optInt("watchActiveCalories", 0),
                         steps = profile.optInt("steps", 0),
                         plannedWorkoutCalories = profile.optInt("plannedWorkoutCalories", 0),
-                        restingHeartRate = profile.optInt("restingHeartRate", 60)
+                        restingHeartRate = profile.optInt("restingHeartRate", 60),
+                        calorieSource = if (profile.optInt("watchActiveCalories", 0) > 0) CalorieSource.Watch else CalorieSource.Logs
                     )
                 )
             }
@@ -155,5 +157,4 @@ internal class LegacyLogbookImport(private val db: SQLiteDatabase) {
     }
 }
 
-private fun JSONObject.optionalDouble(name: String): Double? =
-    if (has(name) && !isNull(name)) optDouble(name) else null
+private fun JSONObject.optionalDouble(name: String): Double? = if (has(name) && !isNull(name)) optDouble(name) else null

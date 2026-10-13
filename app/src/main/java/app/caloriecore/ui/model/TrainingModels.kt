@@ -1,5 +1,7 @@
 package app.caloriecore.ui.model
 
+import java.io.Serializable
+
 data class LoggedSet(
     val id: Long = newLogId(),
     val loggedAt: Long = phoneNowMillis(),
@@ -7,7 +9,7 @@ data class LoggedSet(
     val weightKg: Double,
     val plannedReps: Int? = null,
     val plannedWeightKg: Double? = null
-) {
+) : Serializable {
     val volumeKg: Double
         get() = reps.coerceAtLeast(0) * weightKg.coerceAtLeast(0.0)
 }
@@ -19,7 +21,7 @@ data class LoggedExercise(
     val target: String = "",
     val position: Int = 0,
     val sets: List<LoggedSet> = emptyList()
-) {
+) : Serializable {
     val totalVolumeKg: Double
         get() = sets.sumOf { it.volumeKg }
 
@@ -41,25 +43,24 @@ data class TrainingSession(
         get() = exercises.sumOf { it.sets.size }
 }
 
-data class PlannedSetBlock(
-    val id: Long = newLogId(),
-    val setCount: Int = 3,
-    val reps: Int = 10,
-    val weightKg: Double = 0.0
-) {
+data class PlannedSetBlock(val id: Long = newLogId(), val setCount: Int = 3, val reps: Int = 10, val weightKg: Double = 0.0) :
+    Serializable {
     val label: String
         get() = "${setCount.coerceAtLeast(1)} x ${reps.coerceAtLeast(1)} @ ${weightKg.coerceAtLeast(0.0)} kg"
 
-    fun expand(loggedAt: Long): List<LoggedSet> = List(setCount.coerceAtLeast(1)) {
-        val plannedReps = reps.coerceAtLeast(1)
-        val plannedKg = weightKg.coerceAtLeast(0.0)
-        LoggedSet(
-            loggedAt = loggedAt,
-            reps = plannedReps,
-            weightKg = plannedKg,
-            plannedReps = plannedReps,
-            plannedWeightKg = plannedKg
-        )
+    fun expand(loggedAt: Long): List<LoggedSet> {
+        require(canBeSaved())
+        return List(setCount) {
+            val plannedReps = reps.coerceAtLeast(1)
+            val plannedKg = weightKg.coerceAtLeast(0.0)
+            LoggedSet(
+                loggedAt = loggedAt,
+                reps = plannedReps,
+                weightKg = plannedKg,
+                plannedReps = plannedReps,
+                plannedWeightKg = plannedKg
+            )
+        }
     }
 }
 
@@ -69,7 +70,7 @@ data class TrainingPlanExercise(
     val target: String = "",
     val position: Int = 0,
     val plannedSets: List<PlannedSetBlock> = emptyList()
-)
+) : Serializable
 
 data class TrainingPlan(
     val id: Long = newLogId(),
@@ -101,3 +102,15 @@ fun finishedPlanIdsOnPhoneDay(sessions: List<TrainingSession>, selectedDateTime:
     gymLogsOnPhoneDay(sessions, selectedDateTime)
         .mapNotNull { it.programId }
         .toSet()
+
+fun LoggedSet.canBeSaved(): Boolean = reps in 1..1000 && weightKg.isFinite() && weightKg in 0.0..2000.0
+
+fun PlannedSetBlock.canBeSaved(): Boolean = setCount in 1..100 && reps in 1..1000 &&
+    weightKg.isFinite() && weightKg in 0.0..2000.0
+
+fun TrainingPlan.canBeSaved(): Boolean = title.isNotBlank() && exercises.isNotEmpty() &&
+    exercises.all { it.name.isNotBlank() && it.plannedSets.all { set -> set.canBeSaved() } }
+
+fun TrainingSession.canBeSaved(): Boolean = title.isNotBlank() && exercises.isNotEmpty() &&
+    exercises.any { it.sets.isNotEmpty() } &&
+    exercises.all { it.name.isNotBlank() && it.sets.all { set -> set.canBeSaved() } }

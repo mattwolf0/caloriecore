@@ -7,6 +7,7 @@ private const val LowestPlausibleBodyFat = 2.0
 private const val HighestPlausibleBodyFat = 80.0
 
 enum class SleepQuality {
+    NotLogged,
     VeryLow,
     Low,
     Stable,
@@ -63,24 +64,29 @@ fun burnEstimateForDay(
     }
     val tef = (nutrition.calories * 0.1).roundToInt()
     val sleepAdjustment = when {
+        profile.sleepHours <= 0.0 -> 0
         profile.sleepHours < 5.5 -> -140
         profile.sleepHours < 6.5 -> -80
         profile.sleepHours > 9.5 -> -40
         else -> 0
     }
-    val loggedActivityCalories = activityEntries.activeCaloriesTotal()
-    val total = bmr + profile.watchActiveCalories + profile.plannedWorkoutCalories +
+    val useWatch = profile.calorieSource == CalorieSource.Watch
+    val activeCalories = if (useWatch) profile.watchActiveCalories else 0
+    val plannedTraining = if (useWatch) 0 else profile.plannedWorkoutCalories
+    val loggedActivityCalories = if (useWatch) 0 else activityEntries.activeCaloriesTotal()
+    val total = bmr + activeCalories + plannedTraining +
         loggedActivityCalories + tef + sleepAdjustment
     return BurnEstimate(
         bmr = bmr,
         bmi = bmi,
         tef = tef,
         sleepAdjustment = sleepAdjustment,
-        activeCalories = profile.watchActiveCalories,
-        plannedTraining = profile.plannedWorkoutCalories,
+        activeCalories = activeCalories,
+        plannedTraining = plannedTraining,
         loggedActivityCalories = loggedActivityCalories,
         total = total,
         sleepQuality = when {
+            profile.sleepHours <= 0.0 -> SleepQuality.NotLogged
             profile.sleepHours < 5.5 -> SleepQuality.VeryLow
             profile.sleepHours < 6.5 -> SleepQuality.Low
             profile.sleepHours <= 9.0 -> SleepQuality.Stable
@@ -96,14 +102,13 @@ fun burnEstimateForDay(
     )
 }
 
-private fun BodySnapshot.bodyFatForBmr(): Double? =
-    bodyFatPercent?.takeIf { it in LowestPlausibleBodyFat..HighestPlausibleBodyFat }
+private fun BodySnapshot.bodyFatForBmr(): Double? = bodyFatPercent?.takeIf { it in LowestPlausibleBodyFat..HighestPlausibleBodyFat }
 
 fun Logbook.pickedDayReport(): PickedDayReport {
     val dayMeals = foodRowsForPickedDay()
     val daySessions = gymRowsForPickedDay()
     val dayActivities = activityRowsForPickedDay()
-    val dayProfile = nearestBodyCheckIn(bodyHistory, selectedDateTime)
+    val dayProfile = nearestBodyCheckIn(bodyHistory, phoneDayEndMillis(selectedDateTime))
     return PickedDayReport(
         foodEntries = dayMeals,
         sessions = daySessions,

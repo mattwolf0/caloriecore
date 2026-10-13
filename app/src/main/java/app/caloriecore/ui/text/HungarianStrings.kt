@@ -94,7 +94,9 @@ internal val hungarianStrings = CalorieCoreStrings(
     theme = "Téma",
     system = "Rendszer",
     data = "Adatok",
-    privacyText = "A napló ezen az eszközön marad. Android backup nincs. A lépésadatokat a Google Play-szolgáltatások a telefonon tárolják. Az Open Food Facts vonalkódot vagy keresőszöveget, a Calorie API csak hiányos találatnál vonalkódot kap.",
+    privacyText = "A napló ezen az eszközön marad. Android backup nincs. A lépésadatokat a Google Play-szolgáltatások " +
+        "a telefonon tárolják. Az Open Food Facts vonalkódot vagy keresőszöveget, a Calorie API csak hiányos " +
+        "találatnál vonalkódot kap.",
     resetData = "Helyi adatok törlése",
     light = "Világos",
     dark = "Sötét",
@@ -172,7 +174,8 @@ internal val hungarianStrings = CalorieCoreStrings(
     back = "Vissza",
     view = "Megnyitás",
     openLink = "Link megnyitása",
-    compendiumLegalText = "Aktivitáskódok, leírások és MET-értékek. Az app az eredeti MET-értékeket tárolja, és ezekből becsüli az aktív kcal-t.",
+    compendiumLegalText = "Aktivitáskódok, leírások és MET-értékek. Az app az eredeti MET-értékeket tárolja, és ezekből " +
+        "becsüli az aktív kcal-t.",
     openFoodFactsLegalText = "Élelmiszeradatok. Az adatbázis Open Database License alatt használható.",
     calorieApiLegalText = "Kiegészítő élelmiszeradatok hiányos vonalkódos találatokhoz.",
     androidLibrariesLegalText = "A CalorieCore által használt Android UI- és appkomponensek.",
@@ -183,5 +186,16 @@ internal val hungarianStrings = CalorieCoreStrings(
     profileSetupRequired = "A *-gal jelölt mezők kitöltése kötelező.",
     profileSetupBodyFatHint = "A testzsír megadása nem kötelező. Add meg, ha ismered.",
     profileSetupInvalid = "Ellenőrizd a megadott értékeket.",
-    profileSetupContinue = "Mentés és folytatás"
+    profileSetupContinue = "Mentés és folytatás",
+    saveChanges = "Mentés",
+    saving = "Mentés...",
+    tryAgain = "Újra",
+    loadFailed = "Nem sikerült betölteni a naplót.",
+    saveFailed = "A módosítások mentése nem sikerült. Próbáld újra.",
+    usePhoneSteps = "Telefon lépésszáma",
+    manualSteps = "A lépéseket kézzel is megadhatod a testadatoknál.",
+    allowSteps = "Engedélyezés",
+    openSettings = "Beállítások megnyitása",
+    calorieSource = "Aktív kalória forrása",
+    calorieSourceHint = "Válassz egy forrást. Aktivitásnapló mellett csak a még nem naplózott edzések kalóriáját add meg külön."
 )

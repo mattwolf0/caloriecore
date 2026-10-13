@@ -1,15 +1,22 @@
 package app.caloriecore.ui.format
 
+import java.math.BigDecimal
 import java.util.Locale
 import kotlin.math.roundToInt
 
 object CalorieCoreFormatter {
+    fun logInput(amount: Double): String = if (amount.isFinite()) {
+        BigDecimal.valueOf(amount).stripTrailingZeros().toPlainString()
+    } else {
+        amount.toString()
+    }
+
     fun logDecimal(amount: Double, maxDecimals: Int = 1): String {
         if (amount % 1.0 == 0.0) return amount.toInt().toString()
-        // Keep numbers the same in food and gym rows.
         val pattern = when (maxDecimals) {
             0 -> "%.0f"
             2 -> "%.2f"
+            4 -> "%.4f"
             else -> "%.1f"
         }
         return String.format(Locale.US, pattern, amount).trimEnd('0').trimEnd('.')

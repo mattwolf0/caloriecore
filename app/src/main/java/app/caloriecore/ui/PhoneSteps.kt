@@ -3,8 +3,10 @@ package app.caloriecore.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -17,6 +19,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -24,20 +27,27 @@ import app.caloriecore.data.steps.PhoneStepCounter
 import app.caloriecore.data.steps.StepCounter
 import app.caloriecore.ui.model.PhoneStepState
 import app.caloriecore.ui.model.PhoneStepStatus
+import app.caloriecore.ui.model.logDateText
+import app.caloriecore.ui.model.phoneNowMillis
 import kotlinx.coroutines.delay
 
 internal data class PhoneStepsControl(
-    val state: PhoneStepState
+    val state: PhoneStepState,
+    val requestPermission: () -> Unit,
+    val openSettings: () -> Unit,
+    val retry: () -> Unit
 )
 
 internal class PhoneStepsController(
-    private val phoneStepCounter: StepCounter
+    private val phoneStepCounter: StepCounter,
+    private val today: () -> String = { logDateText(phoneNowMillis()) }
 ) {
     private var startInProgress = false
 
     var state by mutableStateOf(
         PhoneStepState(
             steps = phoneStepCounter.cachedStepsToday(),
+            day = today(),
             status = if (phoneStepCounter.isAvailable) {
                 PhoneStepStatus.Starting
             } else {
@@ -53,13 +63,16 @@ internal class PhoneStepsController(
                 startInProgress = false
                 state = state.copy(status = PhoneStepStatus.NotAvailable)
             }
+
             !hasPermission -> {
                 startInProgress = false
                 state = state.copy(status = PhoneStepStatus.PermissionNeeded)
             }
+
             state.status == PhoneStepStatus.Active -> {
                 refreshSteps()
             }
+
             !startInProgress -> {
                 startRecording()
             }
@@ -77,20 +90,28 @@ internal class PhoneStepsController(
 
     fun refreshSteps() {
         if (state.status != PhoneStepStatus.Active) return
-        phoneStepCounter.readToday(::handleStepResult)
+        val day = today()
+        phoneStepCounter.readToday { handleStepResult(it, day) }
     }
 
     private fun startRecording() {
+        if (startInProgress) return
         startInProgress = true
         state = state.copy(status = PhoneStepStatus.Starting)
-        phoneStepCounter.enable(::handleStepResult)
+        val day = today()
+        phoneStepCounter.enable { handleStepResult(it, day) }
     }
 
-    private fun handleStepResult(result: Result<Int>) {
+    private fun handleStepResult(result: Result<Int>, day: String) {
         startInProgress = false
+        if (day != today()) {
+            state = PhoneStepState(day = today())
+            startRecording()
+            return
+        }
         state = result.fold(
             onSuccess = { steps ->
-                PhoneStepState(steps = steps, status = PhoneStepStatus.Active)
+                PhoneStepState(steps = steps, status = PhoneStepStatus.Active, day = day)
             },
             onFailure = {
                 state.copy(status = PhoneStepStatus.Error)
@@ -149,26 +170,43 @@ internal fun rememberPhoneSteps(enabled: Boolean = true): PhoneStepsControl {
                     delay(StepRefreshMillis)
                     controller.refreshSteps()
                 }
+
                 PhoneStepStatus.Error -> {
                     delay(StepRetryMillis)
                     controller.start(context.canReadPhoneSteps())
                 }
+
                 else -> break
             }
         }
     }
 
     return PhoneStepsControl(
-        state = controller.state
+        state = controller.state,
+        requestPermission = {
+            if (context.canReadPhoneSteps()) {
+                controller.start(true)
+            } else {
+                stepPermissionRequest.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+            }
+        },
+        openSettings = {
+            context.startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = "package:${context.packageName}".toUri()
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            )
+        },
+        retry = { controller.start(context.canReadPhoneSteps()) }
     )
 }
 
 private const val StepRefreshMillis = 15_000L
 private const val StepRetryMillis = 30_000L
 
-private fun Context.canReadPhoneSteps(): Boolean =
-    Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
-        ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACTIVITY_RECOGNITION
-        ) == PackageManager.PERMISSION_GRANTED
+private fun Context.canReadPhoneSteps(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+    ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACTIVITY_RECOGNITION
+    ) == PackageManager.PERMISSION_GRANTED

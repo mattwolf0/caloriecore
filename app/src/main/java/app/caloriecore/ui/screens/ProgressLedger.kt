@@ -1,10 +1,12 @@
 package app.caloriecore.ui.screens
 
 import app.caloriecore.ui.model.Logbook
+import app.caloriecore.ui.model.activitiesOnPhoneDay
 import app.caloriecore.ui.model.burnEstimateForDay
 import app.caloriecore.ui.model.gymLogsOnPhoneDay
 import app.caloriecore.ui.model.mealsOnPhoneDay
 import app.caloriecore.ui.model.nearestBodyCheckIn
+import app.caloriecore.ui.model.phoneDayEndMillis
 import app.caloriecore.ui.model.samePhoneDay
 import app.caloriecore.ui.model.sumPlateMacros
 import java.time.Instant
@@ -34,11 +36,12 @@ internal fun weekAroundPickedDay(logbook: Logbook, days: Int): List<WeekLedgerPo
         val millis = date.noonBucketMillis(zone)
         val foodEntries = mealsOnPhoneDay(logbook.foodEntries, millis)
         val sessions = gymLogsOnPhoneDay(logbook.trainingSessions, millis)
-        val profile = nearestBodyCheckIn(logbook.bodyHistory, millis)
+        val activities = activitiesOnPhoneDay(logbook.activityEntries, millis)
+        val profile = nearestBodyCheckIn(logbook.bodyHistory, phoneDayEndMillis(millis))
         val nutrition = sumPlateMacros(foodEntries)
-        val burn = burnEstimateForDay(profile, foodEntries)
+        val burn = burnEstimateForDay(profile, foodEntries, activities)
         val dayProfile = logbook.bodyHistory
-            .filter { samePhoneDay(it.loggedAt, millis) }
+            .filter { samePhoneDay(it.loggedAt, millis) && it.hasWeightEntry }
             .maxByOrNull { it.loggedAt }
         WeekLedgerPoint(
             millis = millis,

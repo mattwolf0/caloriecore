@@ -7,11 +7,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 class FoodBarcodeReader(private val context: Context) {
-    fun scan(
-        onBarcodeDetected: (String) -> Unit,
-        onUserCanceled: () -> Unit,
-        onScannerFailure: (Throwable) -> Unit
-    ) {
+    fun scan(onBarcodeDetected: (String) -> Unit, onUserCanceled: () -> Unit, onScannerFailure: (Throwable) -> Unit) {
         val groceryCodeOptions = GmsBarcodeScannerOptions.Builder()
             .setBarcodeFormats(
                 Barcode.FORMAT_EAN_13,

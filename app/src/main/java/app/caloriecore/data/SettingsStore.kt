@@ -8,14 +8,15 @@ import app.caloriecore.ui.model.UserPreferences
 
 internal class SettingsStore(private val db: SQLiteDatabase) {
     fun readSettings(): UserPreferences = db.rawQuery(
-        "SELECT language, theme_mode, profile_setup_complete FROM settings WHERE id = 1",
+        "SELECT language, theme_mode, profile_setup_complete, use_phone_steps FROM settings WHERE id = 1",
         emptyArray()
     ).use { cursor ->
         if (!cursor.moveToFirst()) return@use UserPreferences()
         UserPreferences(
             language = enumValue(cursor.string("language"), UiLanguage.System),
             themeMode = enumValue(cursor.string("theme_mode"), UiThemeMode.System),
-            profileSetupComplete = cursor.int("profile_setup_complete") == 1
+            profileSetupComplete = cursor.int("profile_setup_complete") == 1,
+            usePhoneSteps = cursor.int("use_phone_steps") == 1
         )
     }
 
@@ -25,7 +26,8 @@ internal class SettingsStore(private val db: SQLiteDatabase) {
             put("language", settings.language.name)
             put("theme_mode", settings.themeMode.name)
             put("profile_setup_complete", if (settings.profileSetupComplete) 1 else 0)
+            put("use_phone_steps", if (settings.usePhoneSteps) 1 else 0)
         }
-        db.insertWithOnConflict("settings", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        check(db.insertWithOnConflict("settings", null, values, SQLiteDatabase.CONFLICT_REPLACE) != -1L)
     }
 }

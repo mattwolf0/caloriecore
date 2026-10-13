@@ -17,11 +17,7 @@ import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 
 @Composable
-internal fun DailyBurnCard(
-    burn: BurnEstimate,
-    intakeCalories: Int,
-    strings: CalorieCoreStrings
-) {
+internal fun DailyBurnCard(burn: BurnEstimate, intakeCalories: Int, strings: CalorieCoreStrings) {
     val balance = intakeCalories - burn.total
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
