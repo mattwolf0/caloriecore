@@ -25,12 +25,14 @@ import kotlin.math.roundToInt
 private const val WeekWindowDays = 7
 
 @Composable
-fun ProgressScreen(
-    logbook: Logbook,
-    strings: CalorieCoreStrings,
-    onSelectedDateTimeChange: (Long) -> Unit
-) {
-    val chartWeek = remember(logbook.selectedDateTime, logbook.bodyHistory, logbook.foodEntries, logbook.trainingSessions) {
+fun ProgressScreen(logbook: Logbook, strings: CalorieCoreStrings, onSelectedDateTimeChange: (Long) -> Unit) {
+    val chartWeek = remember(
+        logbook.selectedDateTime,
+        logbook.bodyHistory,
+        logbook.foodEntries,
+        logbook.trainingSessions,
+        logbook.activityEntries
+    ) {
         weekAroundPickedDay(logbook, WeekWindowDays)
     }
     val pickedDay = chartWeek.last()

@@ -3,24 +3,26 @@ package app.caloriecore.data
 import app.caloriecore.ui.model.FoodProduct
 import app.caloriecore.ui.model.withMissingMacrosFrom
 import java.net.HttpURLConnection
-import java.net.URLEncoder
 import java.net.URL
+import java.net.URLEncoder
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-class FoodFactsClient {
-    private val calorieApi = CalorieApiClient()
+class FoodFactsClient internal constructor(
+    private val readJson: (String) -> JSONObject,
+    private val barcodeFallback: suspend (String) -> FoodProduct
+) {
+    constructor() : this(::readFoodJson, CalorieApiClient()::lookupBarcode)
 
-    suspend fun lookupBarcode(barcode: String): Result<FoodProduct> {
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val code = barcode.filter(Char::isDigit)
-                require(code.isNotBlank()) { InvalidBarcode }
-                lookupFood(code)
-            }
+    suspend fun lookupBarcode(barcode: String): Result<FoodProduct> = withContext(Dispatchers.IO) {
+        foodLookupResult {
+            val code = barcode.filter(Char::isDigit)
+            require(code.isNotBlank()) { InvalidBarcode }
+            lookupFood(code)
         }
     }
 
@@ -28,6 +30,7 @@ class FoodFactsClient {
         val openFood = try {
             lookupOpenFoodFacts(code)
         } catch (error: Exception) {
+            if (error is CancellationException) throw error
             if (error.message != NotFound) throw error
             null
         }
@@ -35,8 +38,9 @@ class FoodFactsClient {
         if (openFood?.hasCompleteMacros == true) return openFood
 
         val fallback = try {
-            calorieApi.lookupBarcode(code)
+            barcodeFallback(code)
         } catch (error: Exception) {
+            if (error is CancellationException) throw error
             if (openFood != null) return openFood
             throw error
         }
@@ -45,7 +49,7 @@ class FoodFactsClient {
     }
 
     private fun lookupOpenFoodFacts(code: String): FoodProduct {
-        val json = getJson(
+        val json = readJson(
             "https://world.openfoodfacts.org/api/v3/product/$code" +
                 "?fields=code,product_name,brands,quantity,nutriments"
         )
@@ -56,59 +60,38 @@ class FoodFactsClient {
         return parseFood(json.getJSONObject("product"), code)
     }
 
-    suspend fun searchFoods(query: String): Result<List<FoodProduct>> {
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val text = query.trim()
-                require(text.length >= 2) { SearchTooShort }
+    suspend fun searchFoods(query: String): Result<List<FoodProduct>> = withContext(Dispatchers.IO) {
+        foodLookupResult {
+            val text = query.trim()
+            require(text.length >= 2) { SearchTooShort }
 
-                val fastResults = searchFast(text)
-                if (fastResults.isNotEmpty()) {
-                    fastResults
-                } else {
-                    searchLegacy(text)
-                }
+            val fastResults = searchFast(text)
+            if (fastResults.isNotEmpty()) {
+                fastResults
+            } else {
+                searchLegacy(text)
             }
         }
     }
 
-    private fun searchFast(query: String): List<FoodProduct> {
-        return runCatching {
-            val encoded = URLEncoder.encode(query, Charsets.UTF_8.name())
-            val json = getJson("https://search.openfoodfacts.org/search?q=$encoded&page_size=10")
-            val hits = json.optJSONArray("hits")
-                ?: json.optJSONArray("products")
-                ?: JSONArray()
+    private fun searchFast(query: String): List<FoodProduct> = foodLookupResult {
+        val encoded = URLEncoder.encode(query, Charsets.UTF_8.name())
+        val json = readJson("https://search.openfoodfacts.org/search?q=$encoded&page_size=10")
+        val hits = json.optJSONArray("hits")
+            ?: json.optJSONArray("products")
+            ?: JSONArray()
 
-            hits.toFoods()
-        }.getOrDefault(emptyList())
-    }
+        hits.toFoods()
+    }.getOrDefault(emptyList())
 
     private fun searchLegacy(query: String): List<FoodProduct> {
         val encoded = URLEncoder.encode(query, Charsets.UTF_8.name())
-        val json = getJson(
+        val json = readJson(
             "https://world.openfoodfacts.org/cgi/search.pl" +
                 "?search_terms=$encoded&search_simple=1&action=process&json=1&page_size=10" +
                 "&fields=code,product_name,brands,quantity,nutriments"
         )
         return (json.optJSONArray("products") ?: JSONArray()).toFoods()
-    }
-
-    private fun getJson(url: String): JSONObject {
-        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 8000
-            readTimeout = 8000
-            setRequestProperty("User-Agent", UserAgent)
-            setRequestProperty("Accept", "application/json")
-        }
-        try {
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            check(body.isNotBlank()) { "empty_response" }
-            return JSONObject(body)
-        } finally {
-            connection.disconnect()
-        }
     }
 
     private fun JSONArray.toFoods(): List<FoodProduct> {
@@ -175,6 +158,34 @@ class FoodFactsClient {
         const val InvalidBarcode = "invalid_barcode"
         const val SearchTooShort = "invalid_search_query"
         const val NotFound = "product_not_found"
-        private const val UserAgent = "CalorieCore/0.1 Android"
     }
+}
+
+internal fun readFoodJson(url: String): JSONObject {
+    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+        requestMethod = "GET"
+        connectTimeout = 8000
+        readTimeout = 8000
+        setRequestProperty("User-Agent", "CalorieCore/0.1 Android")
+        setRequestProperty("Accept", "application/json")
+    }
+    try {
+        if (connection.responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+            error(FoodFactsClient.NotFound)
+        }
+        check(connection.responseCode in 200..299) { "food_lookup_failed" }
+        val body = connection.inputStream.bufferedReader().use { it.readText() }
+        check(body.isNotBlank()) { "empty_response" }
+        return JSONObject(body)
+    } finally {
+        connection.disconnect()
+    }
+}
+
+private inline fun <T> foodLookupResult(block: () -> T): Result<T> = try {
+    Result.success(block())
+} catch (error: CancellationException) {
+    throw error
+} catch (error: Exception) {
+    Result.failure(error)
 }

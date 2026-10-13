@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +46,6 @@ fun LogMomentPicker(
         logDateText(pickedMillis)
     }
 
-    // Date and time pickers avoid bad typed values.
     fun pickedCalendar(): Calendar = Calendar.getInstance().apply { timeInMillis = pickedMillis }
 
     fun putDateOnPickedMoment(year: Int, month: Int, day: Int) {
@@ -121,6 +121,9 @@ fun LogMomentPicker(
                 },
                 text = "$timeLabel ${logTimeText(pickedMillis)}"
             )
+            if (!isToday) {
+                TextButton(onClick = { onValueChange(System.currentTimeMillis()) }) { Text(todayText) }
+            }
         }
     }
 }
@@ -186,23 +189,25 @@ fun DayPicker(
             onClick = { nudgePickedDay(1) },
             contentDescription = nextDayText
         )
+        if (!isToday) {
+            TextButton(onClick = { onValueChange(System.currentTimeMillis()) }) { Text(todayText) }
+        }
     }
 }
 
 @Composable
-private fun MomentChip(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentDescription: String? = null
-) {
+private fun MomentChip(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, contentDescription: String? = null) {
     Box(
         modifier = modifier
             .height(48.dp)
             .clip(RoundedCornerShape(5.dp))
             .then(
-                if (contentDescription == null) Modifier else Modifier.semantics {
-                    this.contentDescription = contentDescription
+                if (contentDescription == null) {
+                    Modifier
+                } else {
+                    Modifier.semantics {
+                        this.contentDescription = contentDescription
+                    }
                 }
             )
             .clickable(onClick = onClick)

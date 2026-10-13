@@ -16,5 +16,6 @@ enum class UiThemeMode {
 data class UserPreferences(
     val language: UiLanguage = UiLanguage.System,
     val themeMode: UiThemeMode = UiThemeMode.System,
-    val profileSetupComplete: Boolean = false
+    val profileSetupComplete: Boolean = false,
+    val usePhoneSteps: Boolean = true
 )

@@ -45,12 +45,13 @@ internal data class ActivityDraft(
 
     val canSave: Boolean
         get() = when (mode) {
-            ActivityMode.Catalog -> catalogCode != null &&
-                pickedName.isNotBlank() &&
-                minutes.toIntOrNull() in 1..1440 &&
-                met?.let { it.isFinite() && it > 0.0 } == true &&
-                weightKg.isFinite() && weightKg > 0.0 &&
-                calculatedCalories > 0
+            ActivityMode.Catalog ->
+                catalogCode != null &&
+                    pickedName.isNotBlank() &&
+                    minutes.toIntOrNull() in 1..1440 &&
+                    met?.let { it.isFinite() && it > 0.0 } == true &&
+                    weightKg.isFinite() && weightKg > 0.0 &&
+                    calculatedCalories > 0
 
             ActivityMode.Other -> otherName.isNotBlank() &&
                 (otherCalories.toIntOrNull() ?: 0) > 0
@@ -95,7 +96,7 @@ internal class ActivityDraftState(private val draftState: MutableState<ActivityD
     }
 
     fun followSelectedMoment(selectedDateTime: Long, weightKg: Double) {
-        if (draft.editingId == null) {
+        if (!draft.isOpen) {
             draft = draft.copy(loggedAt = selectedDateTime, weightKg = weightKg)
         }
     }

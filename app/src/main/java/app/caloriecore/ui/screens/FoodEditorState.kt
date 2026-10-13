@@ -25,6 +25,7 @@ internal data class FoodDraft(
     val protein: String = "",
     val carbs: String = "",
     val fat: String = "",
+    val lastServingGrams: Int = 100,
     val keepsProductPer100Base: Boolean = false,
     val productKcalPer100g: Double? = null,
     val productProteinPer100g: Double? = null,
@@ -50,10 +51,13 @@ internal class FoodEditorState internal constructor(
         get() = draft.mealBeingEditedId != null
 
     val canSave: Boolean
-        get() = draft.name.isNotBlank() && draft.kcal.isNotBlank()
+        get() = draft.name.isNotBlank() &&
+            draft.grams.toIntOrNull() in 1..100_000 &&
+            draft.kcal.toIntOrNull() in 0..100_000 &&
+            validMacro(draft.protein) && validMacro(draft.carbs) && validMacro(draft.fat)
 
     fun followSelectedMoment(selectedDateTime: Long) {
-        if (draft.mealBeingEditedId == null) changeLoggedAt(selectedDateTime)
+        if (draft.mealBeingEditedId == null && draft.name.isBlank()) changeLoggedAt(selectedDateTime)
     }
 
     fun changeLoggedAt(nextLoggedAt: Long) {
@@ -73,6 +77,8 @@ internal class FoodEditorState internal constructor(
     }
 
     fun edit(entry: FoodEntry) {
+        val grams = entry.servingGrams.coerceAtLeast(1)
+        val scale = 100.0 / grams
         draft = FoodDraft(
             mealBeingEditedId = entry.id,
             mealLoggedAt = entry.loggedAt,
@@ -80,9 +86,15 @@ internal class FoodEditorState internal constructor(
             barcode = entry.barcode,
             grams = entry.servingGrams.toString(),
             kcal = entry.calories.toString(),
-            protein = if (entry.proteinKnown) CalorieCoreFormatter.logDecimal(entry.proteinGrams) else "",
-            carbs = if (entry.carbsKnown) CalorieCoreFormatter.logDecimal(entry.carbGrams) else "",
-            fat = if (entry.fatKnown) CalorieCoreFormatter.logDecimal(entry.fatGrams) else ""
+            protein = if (entry.proteinKnown) CalorieCoreFormatter.logInput(entry.proteinGrams) else "",
+            carbs = if (entry.carbsKnown) CalorieCoreFormatter.logInput(entry.carbGrams) else "",
+            fat = if (entry.fatKnown) CalorieCoreFormatter.logInput(entry.fatGrams) else "",
+            lastServingGrams = grams,
+            keepsProductPer100Base = true,
+            productKcalPer100g = entry.calories * scale,
+            productProteinPer100g = entry.proteinGrams.takeIf { entry.proteinKnown }?.times(scale),
+            productCarbsPer100g = entry.carbGrams.takeIf { entry.carbsKnown }?.times(scale),
+            productFatPer100g = entry.fatGrams.takeIf { entry.fatKnown }?.times(scale)
         )
         lookupNote = null
         hideOffShelf()
@@ -115,13 +127,12 @@ internal class FoodEditorState internal constructor(
         draft = draft.copy(name = nextName)
         if (nextName.isBlank()) {
             lookupNote = null
-            draft = draft.copy(keepsProductPer100Base = false)
             hideOffShelf()
         }
     }
 
     fun updateBarcode(nextBarcode: String) {
-        draft = draft.copy(barcode = keepLogNumberText(nextBarcode))
+        draft = draft.copy(barcode = nextBarcode.filter(Char::isDigit))
     }
 
     fun updateSearchText(nextSearchText: String) {
@@ -133,74 +144,101 @@ internal class FoodEditorState internal constructor(
     }
 
     fun updateServing(nextServing: String) {
-        draft = draft.copy(grams = keepLogNumberText(nextServing))
+        val text = keepLogNumberText(nextServing)
+        draft = draft.copy(
+            grams = text,
+            lastServingGrams = text.toIntOrNull()?.takeIf { it in 1..100_000 } ?: draft.lastServingGrams
+        )
+        refreshProductTotals()
     }
 
     fun updateCalories(nextCalories: String) {
+        val text = keepLogNumberText(nextCalories)
         draft = draft.copy(
-            keepsProductPer100Base = false,
-            kcal = keepLogNumberText(nextCalories)
+            keepsProductPer100Base = true,
+            kcal = text,
+            productKcalPer100g = text.toIntOrNull()?.takeIf { it >= 0 }
+                ?.let { it * 100.0 / servingBase() }
         )
     }
 
     fun updateProtein(nextProtein: String) {
+        val text = keepLogNumberText(nextProtein)
         draft = draft.copy(
-            keepsProductPer100Base = false,
-            protein = keepLogNumberText(nextProtein, allowDecimal = true)
+            keepsProductPer100Base = true,
+            protein = text,
+            productProteinPer100g = macroBase(text)
         )
     }
 
     fun updateCarbs(nextCarbs: String) {
+        val text = keepLogNumberText(nextCarbs)
         draft = draft.copy(
-            keepsProductPer100Base = false,
-            carbs = keepLogNumberText(nextCarbs, allowDecimal = true)
+            keepsProductPer100Base = true,
+            carbs = text,
+            productCarbsPer100g = macroBase(text)
         )
     }
 
     fun updateFat(nextFat: String) {
+        val text = keepLogNumberText(nextFat)
         draft = draft.copy(
-            keepsProductPer100Base = false,
-            fat = keepLogNumberText(nextFat, allowDecimal = true)
+            keepsProductPer100Base = true,
+            fat = text,
+            productFatPer100g = macroBase(text)
         )
     }
 
     fun refreshProductTotals() {
         if (!draft.keepsProductPer100Base) return
-        draft.grams.toIntOrNull()?.takeIf { it >= 0 }?.let { grams ->
-            // Product values are per 100 g, so scale them by grams.
+        draft.grams.toIntOrNull()?.takeIf { it in 1..100_000 }?.let { grams ->
             val scale = grams / 100.0
             draft = draft.copy(
+                lastServingGrams = grams,
                 kcal = draft.productKcalPer100g
                     ?.let { (it * scale).roundToInt().toString() }
-                    .orEmpty(),
+                    ?: draft.kcal,
                 protein = draft.productProteinPer100g
-                    ?.let { CalorieCoreFormatter.logDecimal(it * scale) }
-                    .orEmpty(),
+                    ?.let { CalorieCoreFormatter.logDecimal(it * scale, maxDecimals = 4) }
+                    ?: draft.protein,
                 carbs = draft.productCarbsPer100g
-                    ?.let { CalorieCoreFormatter.logDecimal(it * scale) }
-                    .orEmpty(),
+                    ?.let { CalorieCoreFormatter.logDecimal(it * scale, maxDecimals = 4) }
+                    ?: draft.carbs,
                 fat = draft.productFatPer100g
-                    ?.let { CalorieCoreFormatter.logDecimal(it * scale) }
-                    .orEmpty()
+                    ?.let { CalorieCoreFormatter.logDecimal(it * scale, maxDecimals = 4) }
+                    ?: draft.fat
             )
         }
     }
 
-    fun buildEntry(): FoodEntry = FoodEntry(
-        id = draft.mealBeingEditedId ?: newLogId(),
-        loggedAt = draft.mealLoggedAt,
-        name = draft.name.trim(),
-        barcode = draft.barcode,
-        servingGrams = draft.grams.toIntOrNull() ?: 100,
-        calories = draft.kcal.toIntOrNull() ?: 0,
-        proteinGrams = draft.protein.toDoubleOrNull() ?: 0.0,
-        carbGrams = draft.carbs.toDoubleOrNull() ?: 0.0,
-        fatGrams = draft.fat.toDoubleOrNull() ?: 0.0,
-        proteinKnown = draft.protein.isNotBlank(),
-        carbsKnown = draft.carbs.isNotBlank(),
-        fatKnown = draft.fat.isNotBlank()
-    )
+    private fun macroBase(text: String): Double? = text.toDoubleOrNull()
+        ?.takeIf { it.isFinite() && it >= 0.0 }
+        ?.let { it * 100.0 / servingBase() }
+
+    private fun servingBase(): Int = draft.grams.toIntOrNull()?.takeIf { it in 1..100_000 }
+        ?: draft.lastServingGrams
+
+    fun buildEntry(): FoodEntry {
+        require(canSave)
+        return FoodEntry(
+            id = draft.mealBeingEditedId ?: newLogId(),
+            loggedAt = draft.mealLoggedAt,
+            name = draft.name.trim(),
+            barcode = draft.barcode,
+            servingGrams = draft.grams.toInt(),
+            calories = draft.kcal.toInt(),
+            proteinGrams = draft.protein.toDoubleOrNull() ?: 0.0,
+            carbGrams = draft.carbs.toDoubleOrNull() ?: 0.0,
+            fatGrams = draft.fat.toDoubleOrNull() ?: 0.0,
+            proteinKnown = draft.protein.isNotBlank(),
+            carbsKnown = draft.carbs.isNotBlank(),
+            fatKnown = draft.fat.isNotBlank()
+        )
+    }
 }
+
+private fun validMacro(text: String): Boolean = text.isBlank() ||
+    text.toDoubleOrNull()?.let { it.isFinite() && it in 0.0..100_000.0 } == true
 
 private val FoodDraftStateSaver = listSaver<MutableState<FoodDraft>, Any>(
     save = { state ->
@@ -221,7 +259,8 @@ private val FoodDraftStateSaver = listSaver<MutableState<FoodDraft>, Any>(
             draft.productProteinPer100g?.toString().orEmpty(),
             draft.productCarbsPer100g?.toString().orEmpty(),
             draft.productFatPer100g?.toString().orEmpty(),
-            draft.offSearchText
+            draft.offSearchText,
+            draft.lastServingGrams
         )
     },
     restore = { values ->
@@ -241,7 +280,9 @@ private val FoodDraftStateSaver = listSaver<MutableState<FoodDraft>, Any>(
                 productProteinPer100g = (values[12] as String).toDoubleOrNull(),
                 productCarbsPer100g = (values[13] as String).toDoubleOrNull(),
                 productFatPer100g = (values[14] as String).toDoubleOrNull(),
-                offSearchText = values[15] as String
+                offSearchText = values[15] as String,
+                lastServingGrams = values.getOrNull(16) as? Int
+                    ?: (values[5] as String).toIntOrNull()?.coerceAtLeast(1) ?: 100
             )
         )
     }
@@ -266,6 +307,4 @@ internal fun rememberFoodEditorState(selectedDateTime: Long): FoodEditorState {
     }
 }
 
-private fun macroText(value: Double?): String {
-    return if (value == null) "" else CalorieCoreFormatter.logDecimal(value)
-}
+private fun macroText(value: Double?): String = if (value == null) "" else CalorieCoreFormatter.logInput(value)

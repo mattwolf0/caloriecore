@@ -20,17 +20,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.NumberInput
+import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.components.keepLogNumberText
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.BodySnapshot
+import app.caloriecore.ui.model.CalorieSource
 import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 import app.caloriecore.ui.theme.GymGreen
 
 @Composable
-fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProfileChange: (BodySnapshot) -> Unit) {
-    var bodyCardOpen by rememberSaveable(profile.loggedAt) { mutableStateOf(false) }
+fun BodyMetricsEditor(
+    profile: BodySnapshot,
+    strings: CalorieCoreStrings,
+    onProfileChange: (BodySnapshot) -> Unit,
+    phoneStepsOn: Boolean = false
+) {
+    var bodyCardOpen by rememberSaveable(profile.id, profile.loggedAt) { mutableStateOf(false) }
+    var draft by rememberSaveable(profile.id, profile.loggedAt) { mutableStateOf(BodyDraft(profile)) }
 
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -79,7 +87,10 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
                             )
                         }
                     }
-                    TextButton(onClick = { bodyCardOpen = true }) { Text(strings.edit) }
+                    TextButton(onClick = {
+                        draft = BodyDraft(profile)
+                        bodyCardOpen = true
+                    }) { Text(strings.edit) }
                 }
                 return@Column
             }
@@ -94,8 +105,8 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Sex.entries.forEach { sex ->
                     FilterChip(
-                        selected = profile.sex == sex,
-                        onClick = { onProfileChange(profile.copy(sex = sex)) },
+                        selected = draft.sex == sex,
+                        onClick = { draft = draft.copy(sex = sex) },
                         label = { Text(strings.sexDisplayName(sex)) }
                     )
                 }
@@ -103,17 +114,17 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberInput(
                     label = strings.age,
-                    numberText = profile.age.toString(),
+                    numberText = draft.age,
                     onValueChange = { typedAge ->
-                        keepLogNumberText(typedAge).toIntOrNull()?.let { onProfileChange(profile.copy(age = it)) }
+                        draft = draft.copy(age = keepLogNumberText(typedAge))
                     },
                     modifier = Modifier.weight(1f)
                 )
                 NumberInput(
                     label = strings.height,
-                    numberText = profile.heightCm.toString(),
+                    numberText = draft.height,
                     onValueChange = { typedHeight ->
-                        keepLogNumberText(typedHeight).toIntOrNull()?.let { onProfileChange(profile.copy(heightCm = it)) }
+                        draft = draft.copy(height = keepLogNumberText(typedHeight))
                     },
                     modifier = Modifier.weight(1f),
                     suffix = "cm"
@@ -122,11 +133,9 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberInput(
                     label = strings.weight,
-                    numberText = CalorieCoreFormatter.logDecimal(profile.weightKg),
+                    numberText = draft.weight,
                     onValueChange = { typedWeight ->
-                        keepLogNumberText(typedWeight, allowDecimal = true).toDoubleOrNull()?.let {
-                            onProfileChange(profile.copy(weightKg = it))
-                        }
+                        draft = draft.copy(weight = keepLogNumberText(typedWeight), weightEdited = true)
                     },
                     modifier = Modifier.weight(1f),
                     suffix = "kg",
@@ -134,10 +143,9 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
                 )
                 NumberInput(
                     label = strings.bodyFat,
-                    numberText = profile.bodyFatPercent?.let(CalorieCoreFormatter::logDecimal) ?: "",
+                    numberText = draft.bodyFat,
                     onValueChange = { typedBodyFat ->
-                        val cleaned = keepLogNumberText(typedBodyFat, allowDecimal = true)
-                        onProfileChange(profile.copy(bodyFatPercent = cleaned.toDoubleOrNull()))
+                        draft = draft.copy(bodyFat = keepLogNumberText(typedBodyFat))
                     },
                     modifier = Modifier.weight(1f),
                     suffix = "%",
@@ -147,11 +155,9 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberInput(
                     label = strings.sleep,
-                    numberText = CalorieCoreFormatter.logDecimal(profile.sleepHours),
+                    numberText = draft.sleep,
                     onValueChange = { typedSleep ->
-                        keepLogNumberText(typedSleep, allowDecimal = true).toDoubleOrNull()?.let {
-                            onProfileChange(profile.copy(sleepHours = it))
-                        }
+                        draft = draft.copy(sleep = keepLogNumberText(typedSleep))
                     },
                     modifier = Modifier.weight(1f),
                     suffix = "h",
@@ -159,56 +165,72 @@ fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProf
                 )
                 NumberInput(
                     label = strings.restingHeartRate,
-                    numberText = profile.restingHeartRate.toString(),
+                    numberText = draft.pulse,
                     onValueChange = { typedPulse ->
-                        keepLogNumberText(typedPulse).toIntOrNull()?.let {
-                            onProfileChange(profile.copy(restingHeartRate = it))
-                        }
+                        draft = draft.copy(pulse = keepLogNumberText(typedPulse))
                     },
                     modifier = Modifier.weight(1f),
                     suffix = "bpm"
                 )
             }
+            Text(strings.calorieSource, style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CalorieSource.entries.forEach { source ->
+                    FilterChip(
+                        selected = draft.calorieSource == source,
+                        onClick = { draft = draft.copy(calorieSource = source) },
+                        label = { Text(if (source == CalorieSource.Watch) strings.watch else strings.loggedActivity) }
+                    )
+                }
+            }
+            Text(strings.calorieSourceHint, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberInput(
                     label = strings.activeCalories,
-                    numberText = profile.watchActiveCalories.toString(),
+                    numberText = draft.watchCalories,
                     onValueChange = { typedActiveKcal ->
-                        keepLogNumberText(typedActiveKcal).toIntOrNull()?.let {
-                            onProfileChange(profile.copy(watchActiveCalories = it))
-                        }
+                        draft = draft.copy(watchCalories = keepLogNumberText(typedActiveKcal))
                     },
                     modifier = Modifier.weight(1f)
                 )
                 NumberInput(
                     label = strings.steps,
-                    numberText = profile.steps.toString(),
+                    numberText = if (phoneStepsOn) profile.steps.toString() else draft.steps,
                     onValueChange = { typedSteps ->
-                        keepLogNumberText(typedSteps).toIntOrNull()?.let { onProfileChange(profile.copy(steps = it)) }
+                        draft = draft.copy(steps = keepLogNumberText(typedSteps))
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enabled = !phoneStepsOn
                 )
             }
             NumberInput(
                 label = strings.trainingCalories,
-                numberText = profile.plannedWorkoutCalories.toString(),
+                numberText = draft.trainingCalories,
                 onValueChange = { typedTrainingKcal ->
-                    keepLogNumberText(typedTrainingKcal).toIntOrNull()?.let {
-                        onProfileChange(profile.copy(plannedWorkoutCalories = it))
-                    }
+                    draft = draft.copy(trainingCalories = keepLogNumberText(typedTrainingKcal))
                 }
             )
+            if (!draft.canSave) {
+                Text(strings.profileSetupInvalid, color = MaterialTheme.colorScheme.error)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SolidActionButton(
+                    text = strings.saveChanges,
+                    enabled = draft.canSave,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        draft.buildProfile(profile)?.let(onProfileChange)
+                        bodyCardOpen = false
+                    }
+                )
+                TextButton(onClick = { bodyCardOpen = false }) { Text(strings.cancel) }
+            }
         }
     }
 }
 
 @Composable
-private fun ProfileMetric(
-    label: String,
-    value: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
+private fun ProfileMetric(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
             text = label,

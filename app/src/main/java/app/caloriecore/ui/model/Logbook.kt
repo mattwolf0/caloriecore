@@ -1,7 +1,5 @@
 package app.caloriecore.ui.model
 
-import kotlin.math.abs
-
 data class Logbook(
     val selectedDateTime: Long = phoneNowMillis(),
     val profile: BodySnapshot = BodySnapshot(loggedAt = selectedDateTime),
@@ -13,24 +11,31 @@ data class Logbook(
     val settings: UserPreferences = UserPreferences()
 )
 
-fun <T> List<T>.putById(id: Long, replacement: T, idSelector: (T) -> Long): List<T> =
-    if (any { idSelector(it) == id }) {
-        map { if (idSelector(it) == id) replacement else it }
-    } else {
-        listOf(replacement) + this
-    }
+fun <T> List<T>.putById(id: Long, replacement: T, idSelector: (T) -> Long): List<T> = if (any { idSelector(it) == id }) {
+    map { if (idSelector(it) == id) replacement else it }
+} else {
+    listOf(replacement) + this
+}
 
 fun nearestBodyCheckIn(profiles: List<BodySnapshot>, selectedDateTime: Long): BodySnapshot {
-    // Use the nearest saved body data for the selected day.
-    val exact = profiles.minByOrNull { abs(it.loggedAt - selectedDateTime) }
-        ?.takeIf { abs(it.loggedAt - selectedDateTime) <= 59_999L }
-    if (exact != null) return exact
+    val dayProfile = profiles.filter { samePhoneDay(it.loggedAt, selectedDateTime) }
+        .maxByOrNull { it.loggedAt }
+    if (dayProfile != null) return dayProfile
 
     val previous = profiles
         .filter { it.loggedAt <= phoneDayEndMillis(selectedDateTime) }
         .maxByOrNull { it.loggedAt }
-    val fallback = previous ?: profiles.maxByOrNull { it.loggedAt } ?: BodySnapshot(loggedAt = selectedDateTime)
-    return fallback.copy(id = newLogId(), loggedAt = selectedDateTime)
+    val fallback = previous ?: profiles.minByOrNull { it.loggedAt }
+        ?: return BodySnapshot(loggedAt = selectedDateTime, hasWeightEntry = false)
+    return fallback.copy(
+        id = newLogId(),
+        loggedAt = selectedDateTime,
+        sleepHours = 0.0,
+        watchActiveCalories = 0,
+        steps = 0,
+        plannedWorkoutCalories = 0,
+        hasWeightEntry = false
+    )
 }
 
 fun Logbook.withPickedMoment(nextDateTime: Long): Logbook = copy(
@@ -39,7 +44,12 @@ fun Logbook.withPickedMoment(nextDateTime: Long): Logbook = copy(
 )
 
 fun Logbook.withBodyCheckIn(nextProfile: BodySnapshot): Logbook {
-    val normalized = nextProfile.copy(loggedAt = selectedDateTime)
+    val existing = bodyHistory.find { it.id == nextProfile.id }
+    val sameDay = existing != null && samePhoneDay(existing.loggedAt, selectedDateTime)
+    val normalized = nextProfile.copy(
+        id = if (existing != null && !sameDay) newLogId() else nextProfile.id,
+        loggedAt = if (sameDay) checkNotNull(existing).loggedAt else selectedDateTime
+    )
     val nextHistory = bodyHistory
         .putById(normalized.id, normalized) { it.id }
         .sortedByDescending { it.loggedAt }
@@ -48,8 +58,6 @@ fun Logbook.withBodyCheckIn(nextProfile: BodySnapshot): Logbook {
 
 fun Logbook.foodRowsForPickedDay(): List<FoodEntry> = mealsOnPhoneDay(foodEntries, selectedDateTime)
 
-fun Logbook.activityRowsForPickedDay(): List<ActivityEntry> =
-    activitiesOnPhoneDay(activityEntries, selectedDateTime)
+fun Logbook.activityRowsForPickedDay(): List<ActivityEntry> = activitiesOnPhoneDay(activityEntries, selectedDateTime)
 
-fun Logbook.gymRowsForPickedDay(): List<TrainingSession> =
-    gymLogsOnPhoneDay(trainingSessions, selectedDateTime)
+fun Logbook.gymRowsForPickedDay(): List<TrainingSession> = gymLogsOnPhoneDay(trainingSessions, selectedDateTime)

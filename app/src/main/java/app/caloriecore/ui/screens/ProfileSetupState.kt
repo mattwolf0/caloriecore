@@ -59,11 +59,11 @@ internal class ProfileSetupState internal constructor(
     }
 
     fun updateWeight(nextValue: String) {
-        weightInput = keepLogNumberText(nextValue, allowDecimal = true)
+        weightInput = keepLogNumberText(nextValue)
     }
 
     fun updateBodyFat(nextValue: String) {
-        bodyFatInput = keepLogNumberText(nextValue, allowDecimal = true)
+        bodyFatInput = keepLogNumberText(nextValue)
     }
 
     fun buildProfile(loggedAt: Long): BodySnapshot {
@@ -105,5 +105,4 @@ private val ValidBodyFat = 2.0..80.0
 
 private fun String.isIntIn(range: IntRange): Boolean = toIntOrNull()?.let { it in range } == true
 
-private fun String.isDoubleIn(range: ClosedFloatingPointRange<Double>): Boolean =
-    toDoubleOrNull()?.let { it in range } == true
+private fun String.isDoubleIn(range: ClosedFloatingPointRange<Double>): Boolean = toDoubleOrNull()?.let { it in range } == true

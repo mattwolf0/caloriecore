@@ -18,11 +18,7 @@ import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.navigation.CalorieCoreTab
 
 @Composable
-fun BottomDock(
-    currentTab: CalorieCoreTab,
-    tabLabel: (CalorieCoreTab) -> String,
-    onSelect: (CalorieCoreTab) -> Unit
-) {
+fun BottomDock(currentTab: CalorieCoreTab, tabLabel: (CalorieCoreTab) -> String, onSelect: (CalorieCoreTab) -> Unit) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface
     ) {

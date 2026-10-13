@@ -94,7 +94,9 @@ internal val englishStrings = CalorieCoreStrings(
     theme = "Theme",
     system = "System",
     data = "Data",
-    privacyText = "Logs stay on this device. Android backup is off. Google Play services stores step data on the phone. Open Food Facts gets barcode or search text; Calorie API gets a barcode only for incomplete lookups.",
+    privacyText = "Logs stay on this device. Android backup is off. Google Play services stores step data on the " +
+        "phone. Open Food Facts gets barcode or search text; Calorie API gets a barcode only for incomplete " +
+        "lookups.",
     resetData = "Clear local data",
     light = "Light",
     dark = "Dark",
@@ -172,7 +174,8 @@ internal val englishStrings = CalorieCoreStrings(
     back = "Back",
     view = "View",
     openLink = "Open link",
-    compendiumLegalText = "Activity codes, descriptions and MET values. The app keeps the original MET values and uses them to estimate active kcal.",
+    compendiumLegalText = "Activity codes, descriptions and MET values. The app keeps the original MET values and uses them to " +
+        "estimate active kcal.",
     openFoodFactsLegalText = "Food product data. The database is available under the Open Database License.",
     calorieApiLegalText = "Fallback food product data for incomplete barcode results.",
     androidLibrariesLegalText = "Android UI and app components used by CalorieCore.",
@@ -183,5 +186,16 @@ internal val englishStrings = CalorieCoreStrings(
     profileSetupRequired = "Fields marked with * are required.",
     profileSetupBodyFatHint = "Body fat is optional. Add it if you know it.",
     profileSetupInvalid = "Check the entered values.",
-    profileSetupContinue = "Save and continue"
+    profileSetupContinue = "Save and continue",
+    saveChanges = "Save changes",
+    saving = "Saving...",
+    tryAgain = "Try again",
+    loadFailed = "Could not load your logbook.",
+    saveFailed = "Your changes could not be saved. Try again.",
+    usePhoneSteps = "Use phone steps",
+    manualSteps = "You can enter steps in your body data.",
+    allowSteps = "Allow steps",
+    openSettings = "Open settings",
+    calorieSource = "Active calorie source",
+    calorieSourceHint = "Choose one source. With activity logs, only add training calories for training you have not logged."
 )

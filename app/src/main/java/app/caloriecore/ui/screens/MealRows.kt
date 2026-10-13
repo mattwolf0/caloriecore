@@ -78,8 +78,7 @@ private fun MealLogRow(entry: FoodEntry, strings: CalorieCoreStrings, onEdit: ()
     }
 }
 
-private fun macroValue(value: Double, isKnown: Boolean): String =
-    if (isKnown) CalorieCoreFormatter.grams(value) else "—"
+private fun macroValue(value: Double, isKnown: Boolean): String = if (isKnown) CalorieCoreFormatter.grams(value) else "—"
 
 @Composable
 private fun EmptyMealCard(message: String) {

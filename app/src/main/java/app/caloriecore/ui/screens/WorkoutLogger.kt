@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -58,6 +59,7 @@ internal fun WorkoutLogger(
                     exercise = exercise,
                     strings = strings,
                     onChange = draft::updateExercise,
+                    onSetInputValid = draft::setInputValid,
                     onDelete = { draft.removeExercise(exercise.id) }
                 )
             }
@@ -79,6 +81,7 @@ private fun SessionExerciseEditor(
     exercise: LoggedExercise,
     strings: CalorieCoreStrings,
     onChange: (LoggedExercise) -> Unit,
+    onSetInputValid: (Long, Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     var reps by rememberSaveable(exercise.id) { mutableStateOf("10") }
@@ -96,34 +99,38 @@ private fun SessionExerciseEditor(
                 Text(strings.noSets, color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 exercise.sets.forEachIndexed { index, set ->
-                    SetEditorRow(
-                        index = index,
-                        set = set,
-                        strings = strings,
-                        onChange = { nextSet ->
-                            onChange(
-                                exercise.copy(
-                                    sets = exercise.sets.map {
-                                        if (it.id == set.id) nextSet else it
-                                    }
+                    key(set.id) {
+                        SetEditorRow(
+                            index = index,
+                            set = set,
+                            strings = strings,
+                            onInputValid = { onSetInputValid(set.id, it) },
+                            onChange = { nextSet ->
+                                onChange(
+                                    exercise.copy(
+                                        sets = exercise.sets.map {
+                                            if (it.id == set.id) nextSet else it
+                                        }
+                                    )
                                 )
-                            )
-                        },
-                        onDuplicate = { onChange(exercise.copy(sets = exercise.sets + set.copy(id = newLogId()))) },
-                        onDelete = { onChange(exercise.copy(sets = exercise.sets.filterNot { it.id == set.id })) }
-                    )
+                            },
+                            onDuplicate = { onChange(exercise.copy(sets = exercise.sets + set.copy(id = newLogId()))) },
+                            onDelete = { onChange(exercise.copy(sets = exercise.sets.filterNot { it.id == set.id })) }
+                        )
+                    }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 NumberInput(strings.reps, reps, { reps = keepLogNumberText(it) }, Modifier.weight(1f))
-                NumberInput(strings.load, weight, { weight = keepLogNumberText(it, true) }, Modifier.weight(1f), "kg", true)
+                NumberInput(strings.load, weight, { weight = keepLogNumberText(it) }, Modifier.weight(1f), "kg", true)
                 TextButton(
-                    enabled = reps.isNotBlank(),
+                    enabled = reps.toIntOrNull() in 1..1000 &&
+                        (weight.isBlank() || weight.toDoubleOrNull()?.let { it.isFinite() && it in 0.0..2000.0 } == true),
                     onClick = {
                         onChange(
                             exercise.copy(
                                 sets = exercise.sets + LoggedSet(
-                                    reps = reps.toIntOrNull()?.coerceAtLeast(1) ?: 1,
+                                    reps = reps.toInt(),
                                     weightKg = weight.toDoubleOrNull() ?: 0.0
                                 )
                             )
@@ -141,9 +148,21 @@ private fun SetEditorRow(
     set: LoggedSet,
     strings: CalorieCoreStrings,
     onChange: (LoggedSet) -> Unit,
+    onInputValid: (Boolean) -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit
 ) {
+    var reps by rememberSaveable(set.id) { mutableStateOf(set.reps.toString()) }
+    var weight by rememberSaveable(set.id) { mutableStateOf(CalorieCoreFormatter.logInput(set.weightKg)) }
+
+    fun updateSet() {
+        val nextReps = reps.toIntOrNull()
+        val nextWeight = weight.toDoubleOrNull()
+        val valid = nextReps in 1..1000 && nextWeight?.let { it.isFinite() && it in 0.0..2000.0 } == true
+        onInputValid(valid)
+        if (valid) onChange(set.copy(reps = checkNotNull(nextReps), weightKg = checkNotNull(nextWeight)))
+    }
+
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Row(
@@ -164,13 +183,13 @@ private fun SetEditorRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NumberInput(strings.reps, set.reps.toString(), { typedReps ->
-                    keepLogNumberText(typedReps).toIntOrNull()?.let { onChange(set.copy(reps = it.coerceAtLeast(1))) }
+                NumberInput(strings.reps, reps, { typedReps ->
+                    reps = keepLogNumberText(typedReps)
+                    updateSet()
                 }, Modifier.weight(1f))
-                NumberInput(strings.load, CalorieCoreFormatter.logDecimal(set.weightKg), { typedLoad ->
-                    keepLogNumberText(typedLoad, allowDecimal = true)
-                        .toDoubleOrNull()
-                        ?.let { onChange(set.copy(weightKg = it)) }
+                NumberInput(strings.load, weight, { typedLoad ->
+                    weight = keepLogNumberText(typedLoad)
+                    updateSet()
                 }, Modifier.weight(1f), "kg", true)
                 TextButton(onClick = onDuplicate) { Text(strings.duplicate) }
                 TextButton(onClick = onDelete) { Text(strings.delete) }

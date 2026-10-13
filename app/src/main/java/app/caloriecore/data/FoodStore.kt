@@ -42,6 +42,6 @@ internal class FoodStore(private val db: SQLiteDatabase) {
             put("carb_known", if (meal.carbsKnown) 1 else 0)
             put("fat_known", if (meal.fatKnown) 1 else 0)
         }
-        db.insertWithOnConflict("meals", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        check(db.insertWithOnConflict("meals", null, values, SQLiteDatabase.CONFLICT_REPLACE) != -1L)
     }
 }

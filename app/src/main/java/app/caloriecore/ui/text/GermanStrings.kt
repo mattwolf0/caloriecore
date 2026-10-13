@@ -94,7 +94,9 @@ internal val germanStrings = CalorieCoreStrings(
     theme = "Thema",
     system = "System",
     data = "Daten",
-    privacyText = "Das Protokoll bleibt auf diesem Gerät. Android-Backup ist aus. Google Play-Dienste speichern Schrittdaten auf dem Handy. Open Food Facts erhält Barcode oder Suchtext; Calorie API nur bei unvollständigen Treffern einen Barcode.",
+    privacyText = "Das Protokoll bleibt auf diesem Gerät. Android-Backup ist aus. Google Play-Dienste speichern " +
+        "Schrittdaten auf dem Handy. Open Food Facts erhält Barcode oder Suchtext; Calorie API nur bei " +
+        "unvollständigen Treffern einen Barcode.",
     resetData = "Lokale Daten löschen",
     light = "Hell",
     dark = "Dunkel",
@@ -172,7 +174,8 @@ internal val germanStrings = CalorieCoreStrings(
     back = "Zurück",
     view = "Anzeigen",
     openLink = "Link öffnen",
-    compendiumLegalText = "Aktivitätscodes, Beschreibungen und MET-Werte. Die App speichert die originalen MET-Werte und schätzt damit aktive kcal.",
+    compendiumLegalText = "Aktivitätscodes, Beschreibungen und MET-Werte. Die App speichert die originalen MET-Werte und " +
+        "schätzt damit aktive kcal.",
     openFoodFactsLegalText = "Lebensmitteldaten. Die Datenbank ist unter der Open Database License verfügbar.",
     calorieApiLegalText = "Zusätzliche Lebensmitteldaten für unvollständige Barcode-Ergebnisse.",
     androidLibrariesLegalText = "Android UI- und App-Komponenten, die CalorieCore verwendet.",
@@ -183,5 +186,16 @@ internal val germanStrings = CalorieCoreStrings(
     profileSetupRequired = "Felder mit * sind erforderlich.",
     profileSetupBodyFatHint = "Körperfett ist optional. Trage es ein, wenn du es kennst.",
     profileSetupInvalid = "Prüfe die eingegebenen Werte.",
-    profileSetupContinue = "Speichern und weiter"
+    profileSetupContinue = "Speichern und weiter",
+    saveChanges = "Speichern",
+    saving = "Speichern...",
+    tryAgain = "Erneut versuchen",
+    loadFailed = "Das Tagebuch konnte nicht geladen werden.",
+    saveFailed = "Die Änderungen konnten nicht gespeichert werden. Versuche es erneut.",
+    usePhoneSteps = "Telefonschritte verwenden",
+    manualSteps = "Du kannst Schritte in deinen Körperdaten eingeben.",
+    allowSteps = "Schritte erlauben",
+    openSettings = "Einstellungen öffnen",
+    calorieSource = "Quelle der aktiven Kalorien",
+    calorieSourceHint = "Wähle eine Quelle. Ergänze beim Aktivitätsprotokoll nur Kalorien für Training, das du noch nicht erfasst hast."
 )

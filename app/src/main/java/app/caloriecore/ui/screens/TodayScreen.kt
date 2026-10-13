@@ -36,7 +36,13 @@ fun TodayScreen(
     strings: CalorieCoreStrings,
     onSelectedDateTimeChange: (Long) -> Unit,
     onProfileChange: (BodySnapshot) -> Unit,
-    phoneStepState: PhoneStepState
+    phoneStepState: PhoneStepState,
+    onPhoneStepsChange: (Boolean) -> Unit,
+    onStepPermission: () -> Unit,
+    onStepSettings: () -> Unit,
+    onStepRetry: () -> Unit,
+    saving: Boolean = false,
+    saveFailed: Boolean = false
 ) {
     val pickedDayReport = logbook.pickedDayReport()
     val burnMath = pickedDayReport.burnEstimate
@@ -72,16 +78,34 @@ fun TodayScreen(
             item {
                 StepCounterCard(
                     state = phoneStepState,
-                    strings = strings
+                    strings = strings,
+                    usePhoneSteps = logbook.settings.usePhoneSteps,
+                    manualSteps = logbook.profile.steps,
+                    onPhoneStepsChange = onPhoneStepsChange,
+                    onPermission = onStepPermission,
+                    onSettings = onStepSettings,
+                    onRetry = onStepRetry
                 )
             }
         }
-        item { ShelfHeader(strings.profileData, strings.saved) }
+        item {
+            ShelfHeader(
+                strings.profileData,
+                if (saveFailed) {
+                    null
+                } else if (saving) {
+                    strings.saving
+                } else {
+                    strings.saved
+                }
+            )
+        }
         item {
             BodyMetricsEditor(
                 profile = bodyCard,
                 strings = strings,
-                onProfileChange = onProfileChange
+                onProfileChange = onProfileChange,
+                phoneStepsOn = logbook.settings.usePhoneSteps && samePhoneDay(logbook.selectedDateTime, phoneNowMillis())
             )
         }
         item {

@@ -77,12 +77,34 @@ class PhoneStepsControllerTest {
         assertEquals(1_050, controller.state.steps)
         assertEquals(PhoneStepStatus.Active, controller.state.status)
     }
+
+    @Test
+    fun lateResultsFromYesterdayCannotBecomeTodaysSteps() {
+        var day = "2026-10-12"
+        val callbacks = mutableListOf<(Result<Int>) -> Unit>()
+        val counter = object : StepCounter {
+            override val isAvailable = true
+            override fun cachedStepsToday() = 0
+            override fun enable(onFinished: (Result<Int>) -> Unit) {
+                callbacks += onFinished
+            }
+            override fun readToday(onFinished: (Result<Int>) -> Unit) {
+                callbacks += onFinished
+            }
+        }
+        val controller = PhoneStepsController(counter, today = { day })
+        controller.start(hasPermission = true)
+        day = "2026-10-13"
+        callbacks[0](Result.success(8000))
+        assertEquals(0, controller.state.steps)
+        assertEquals(2, callbacks.size)
+        callbacks[1](Result.success(12))
+        assertEquals(12, controller.state.steps)
+        assertEquals(day, controller.state.day)
+    }
 }
 
-private class FakeStepCounter(
-    override val isAvailable: Boolean = true,
-    private val cachedSteps: Int = 0
-) : StepCounter {
+private class FakeStepCounter(override val isAvailable: Boolean = true, private val cachedSteps: Int = 0) : StepCounter {
     var enableCalls = 0
     var readCalls = 0
     var enableResult: Result<Int> = Result.success(cachedSteps)

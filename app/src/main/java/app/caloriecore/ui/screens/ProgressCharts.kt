@@ -29,12 +29,7 @@ import app.caloriecore.ui.theme.WarningRed
 import kotlin.math.abs
 
 @Composable
-internal fun WeightLineCard(
-    title: String,
-    trailing: String,
-    week: List<WeekLedgerPoint>,
-    emptyText: String
-) {
+internal fun WeightLineCard(title: String, trailing: String, week: List<WeekLedgerPoint>, emptyText: String) {
     val color = GymGreen
     val values = week.mapNotNull { it.weightKg }
     val minValue = values.minOrNull() ?: 0.0
@@ -100,12 +95,7 @@ internal fun WeightLineCard(
 }
 
 @Composable
-internal fun BalanceBarsCard(
-    title: String,
-    trailing: String,
-    week: List<WeekLedgerPoint>,
-    emptyText: String
-) {
+internal fun BalanceBarsCard(title: String, trailing: String, week: List<WeekLedgerPoint>, emptyText: String) {
     val outlineColor = MaterialTheme.colorScheme.outline
     val values = week.mapNotNull { it.balanceKcal }
     val chartDescription = "$title. " + week.joinToString { day ->
@@ -165,12 +155,7 @@ internal fun BalanceBarsCard(
 }
 
 @Composable
-internal fun VolumeBarsCard(
-    title: String,
-    trailing: String,
-    week: List<WeekLedgerPoint>,
-    emptyText: String
-) {
+internal fun VolumeBarsCard(title: String, trailing: String, week: List<WeekLedgerPoint>, emptyText: String) {
     val color = WarningRed
     val values = week.mapNotNull { it.trainingVolumeKg }
     val displayMax = values.maxOrNull() ?: 0.0

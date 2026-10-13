@@ -9,11 +9,14 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import kotlin.math.abs
 
-private val PhoneZone: ZoneId = ZoneId.systemDefault()
+private val PhoneZone: ZoneId get() = ZoneId.systemDefault()
 private val LogDateFormat: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val LogClockFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 fun phoneNowMillis(): Long = System.currentTimeMillis()
+
+fun newEntryMoment(selectedDateTime: Long, now: Long = phoneNowMillis()): Long =
+    if (samePhoneDay(selectedDateTime, now)) now else selectedDateTime
 
 fun newLogId(): Long {
     val millis = phoneNowMillis()
@@ -43,8 +46,7 @@ fun parseLogMoment(date: String, time: String): Long? = try {
     null
 }
 
-fun samePhoneDay(firstMillis: Long, secondMillis: Long): Boolean =
-    logDateText(firstMillis) == logDateText(secondMillis)
+fun samePhoneDay(firstMillis: Long, secondMillis: Long): Boolean = logDateText(firstMillis) == logDateText(secondMillis)
 
 fun phoneDayStartMillis(anchorMillis: Long): Long = Instant.ofEpochMilli(anchorMillis)
     .atZone(PhoneZone)

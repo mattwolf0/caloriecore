@@ -37,6 +37,6 @@ internal class ActivityStore(private val db: SQLiteDatabase) {
             putNullable("weight_kg", entry.weightKg)
             put("active_calories", entry.activeCalories)
         }
-        db.insertWithOnConflict("activity_entries", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        check(db.insertWithOnConflict("activity_entries", null, values, SQLiteDatabase.CONFLICT_REPLACE) != -1L)
     }
 }

@@ -22,18 +22,15 @@ data class ActivityCatalogItem(
 ) {
     fun nameFor(language: UiLanguage): String = when (language) {
         UiLanguage.Hungarian -> nameHu
+
         UiLanguage.German -> nameDe
+
         UiLanguage.System,
         UiLanguage.English -> shortNameEn
     } ?: shortNameEn ?: nameEn
 }
 
-data class ActivityCatalog(
-    val version: String,
-    val population: String,
-    val source: String,
-    val items: List<ActivityCatalogItem>
-)
+data class ActivityCatalog(val version: String, val population: String, val source: String, val items: List<ActivityCatalogItem>)
 
 data class ActivityEntry(
     val id: Long = newLogId(),
@@ -69,11 +66,7 @@ fun activitiesOnPhoneDay(entries: List<ActivityEntry>, selectedDateTime: Long): 
 
 fun List<ActivityEntry>.activeCaloriesTotal(): Int = sumOf { it.activeCalories.coerceAtLeast(0) }
 
-fun searchActivities(
-    items: List<ActivityCatalogItem>,
-    query: String,
-    language: UiLanguage
-): List<ActivityCatalogItem> {
+fun searchActivities(items: List<ActivityCatalogItem>, query: String, language: UiLanguage): List<ActivityCatalogItem> {
     val cleanQuery = query.searchText()
     if (cleanQuery.isBlank()) {
         return items.filter { it.common }.sortedBy { it.nameFor(language).searchText() }

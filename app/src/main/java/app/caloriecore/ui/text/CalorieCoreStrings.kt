@@ -191,7 +191,18 @@ data class CalorieCoreStrings(
     val profileSetupRequired: String = "Fields marked with * are required.",
     val profileSetupBodyFatHint: String = "Body fat is optional. Add it if you know it.",
     val profileSetupInvalid: String = "Check the entered values.",
-    val profileSetupContinue: String = "Save and continue"
+    val profileSetupContinue: String = "Save and continue",
+    val saveChanges: String = "Save changes",
+    val saving: String = "Saving...",
+    val tryAgain: String = "Try again",
+    val loadFailed: String = "Could not load your logbook.",
+    val saveFailed: String = "Your changes could not be saved. Try again.",
+    val usePhoneSteps: String = "Use phone steps",
+    val manualSteps: String = "You can enter steps in your body data.",
+    val allowSteps: String = "Allow steps",
+    val openSettings: String = "Open settings",
+    val calorieSource: String = "Active calorie source",
+    val calorieSourceHint: String = "Choose one source. With activity logs, only add training calories for training you have not logged."
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today
@@ -227,6 +238,7 @@ data class CalorieCoreStrings(
     }
 
     fun sleepQualityDisplayName(quality: SleepQuality): String = when (quality) {
+        SleepQuality.NotLogged -> noEntries
         SleepQuality.VeryLow -> veryLowSleep
         SleepQuality.Low -> lowSleep
         SleepQuality.Stable -> stableSleep

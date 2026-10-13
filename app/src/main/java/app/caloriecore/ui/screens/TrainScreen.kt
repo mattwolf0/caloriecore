@@ -29,6 +29,7 @@ import app.caloriecore.ui.model.UiLanguage
 import app.caloriecore.ui.model.activityRowsForPickedDay
 import app.caloriecore.ui.model.finishedPlanIdsOnPhoneDay
 import app.caloriecore.ui.model.gymRowsForPickedDay
+import app.caloriecore.ui.model.newEntryMoment
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 import app.caloriecore.ui.theme.GymGreen
@@ -123,7 +124,7 @@ fun TrainScreen(
                 entries = activitiesForPickedDay,
                 strings = strings,
                 editorOpen = activityDraft.draft.isOpen,
-                onAdd = { activityDraft.start(logbook.selectedDateTime, logbook.profile.weightKg) },
+                onAdd = { activityDraft.start(newEntryMoment(logbook.selectedDateTime), logbook.profile.weightKg) },
                 onEdit = { entry -> activityDraft.reopen(entry, logbook.profile.weightKg) },
                 onDelete = { entry -> deleteActivityId = entry.id }
             )
@@ -155,7 +156,7 @@ fun TrainScreen(
                 planDraft.clear()
                 showPlanBuilder = true
             },
-            onStartPlan = { plan -> workoutDraft.startFromPlan(plan, logbook.selectedDateTime) },
+            onStartPlan = { plan -> workoutDraft.startFromPlan(plan, newEntryMoment(logbook.selectedDateTime)) },
             onEditPlan = { plan ->
                 planDraft.reopen(plan)
                 showPlanBuilder = true

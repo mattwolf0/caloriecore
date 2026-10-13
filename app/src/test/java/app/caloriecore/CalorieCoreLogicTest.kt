@@ -4,10 +4,11 @@ import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.ActivityEntry
 import app.caloriecore.ui.model.ActivitySource
 import app.caloriecore.ui.model.BodySnapshot
-import app.caloriecore.ui.model.LoggedExercise
-import app.caloriecore.ui.model.LoggedSet
+import app.caloriecore.ui.model.CalorieSource
 import app.caloriecore.ui.model.FoodEntry
 import app.caloriecore.ui.model.FoodProduct
+import app.caloriecore.ui.model.LoggedExercise
+import app.caloriecore.ui.model.LoggedSet
 import app.caloriecore.ui.model.PlannedSetBlock
 import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.model.TrainingPlan
@@ -15,10 +16,10 @@ import app.caloriecore.ui.model.TrainingPlanExercise
 import app.caloriecore.ui.model.TrainingSession
 import app.caloriecore.ui.model.UiLanguage
 import app.caloriecore.ui.model.burnEstimateForDay
-import app.caloriecore.ui.model.sumPlateMacros
 import app.caloriecore.ui.model.mealsOnPhoneDay
 import app.caloriecore.ui.model.parseLogMoment
 import app.caloriecore.ui.model.startSheetFor
+import app.caloriecore.ui.model.sumPlateMacros
 import app.caloriecore.ui.model.withMissingMacrosFrom
 import app.caloriecore.ui.text.resolveCalorieCoreLanguage
 import java.util.Locale
@@ -130,7 +131,8 @@ class CalorieCoreLogicTest {
             weightKg = 80.0,
             sleepHours = 7.0,
             watchActiveCalories = 500,
-            plannedWorkoutCalories = 300
+            plannedWorkoutCalories = 300,
+            calorieSource = CalorieSource.Watch
         )
         val foodEntries = listOf(
             FoodEntry(name = "Training lunch", servingGrams = 100, calories = 1000, proteinGrams = 40.0, carbGrams = 120.0, fatGrams = 20.0)
@@ -140,7 +142,7 @@ class CalorieCoreLogicTest {
 
         assertEquals(1780, estimate.bmr)
         assertEquals(100, estimate.tef)
-        assertEquals(2680, estimate.total)
+        assertEquals(2380, estimate.total)
         assertTrue(estimate.bmi > 24.0)
     }
 
@@ -300,5 +302,27 @@ class CalorieCoreLogicTest {
         assertEquals(UiLanguage.German, resolveCalorieCoreLanguage(UiLanguage.System, Locale.forLanguageTag("de-DE")))
         assertEquals(UiLanguage.English, resolveCalorieCoreLanguage(UiLanguage.System, Locale.forLanguageTag("fr-FR")))
         assertEquals(UiLanguage.German, resolveCalorieCoreLanguage(UiLanguage.German, Locale.forLanguageTag("hu-HU")))
+    }
+
+    @Test
+    fun watchCaloriesDoNotAddTheSameLoggedActivityAgain() {
+        val body = BodySnapshot(
+            sleepHours = 7.0,
+            watchActiveCalories = 500,
+            plannedWorkoutCalories = 300,
+            calorieSource = CalorieSource.Watch
+        )
+        val walk = ActivityEntry(name = "Walk", source = ActivitySource.Manual, activeCalories = 300)
+        val estimate = burnEstimateForDay(body, emptyList(), listOf(walk))
+        assertEquals(estimate.bmr + 500, estimate.total)
+        assertEquals(0, estimate.loggedActivityCalories)
+        assertEquals(0, estimate.plannedTraining)
+    }
+
+    @Test
+    fun unknownSleepDoesNotReduceTheBurnEstimate() {
+        val estimate = burnEstimateForDay(BodySnapshot(sleepHours = 0.0), emptyList())
+        assertEquals(0, estimate.sleepAdjustment)
+        assertEquals(estimate.bmr, estimate.total)
     }
 }

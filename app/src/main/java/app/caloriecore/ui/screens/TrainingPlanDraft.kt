@@ -11,6 +11,7 @@ import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.PlannedSetBlock
 import app.caloriecore.ui.model.TrainingPlan
 import app.caloriecore.ui.model.TrainingPlanExercise
+import app.caloriecore.ui.model.canBeSaved
 import app.caloriecore.ui.model.newLogId
 
 internal class TrainingPlanDraft internal constructor(
@@ -34,7 +35,17 @@ internal class TrainingPlanDraft internal constructor(
         get() = openPlanId != null
 
     val canSave: Boolean
-        get() = planNameInput.isNotBlank() && planScratchpad.isNotEmpty()
+        get() = planNameInput.isNotBlank() && planScratchpad.isNotEmpty() &&
+            planScratchpad.all { it.name.isNotBlank() && it.plannedSets.all { set -> set.canBeSaved() } }
+
+    val canAddExercise: Boolean
+        get() = exerciseNameInput.isNotBlank() &&
+            plannedSetCountInput.toIntOrNull() in 1..100 &&
+            plannedRepsInput.toIntOrNull() in 1..1000 &&
+            (
+                plannedLoadInput.isBlank() || plannedLoadInput.toDoubleOrNull()
+                    ?.let { it.isFinite() && it in 0.0..2000.0 } == true
+                )
 
     fun clear() {
         openPlanId = null
@@ -58,10 +69,10 @@ internal class TrainingPlanDraft internal constructor(
 
     fun addExercise() {
         val rackName = exerciseNameInput.trim()
-        if (rackName.isBlank()) return
+        if (!canAddExercise) return
         val targetLine = PlannedSetBlock(
-            setCount = plannedSetCountInput.toIntOrNull()?.coerceAtLeast(1) ?: 1,
-            reps = plannedRepsInput.toIntOrNull()?.coerceAtLeast(1) ?: 1,
+            setCount = plannedSetCountInput.toInt(),
+            reps = plannedRepsInput.toInt(),
             weightKg = plannedLoadInput.toDoubleOrNull() ?: 0.0
         )
         planScratchpad = planScratchpad + TrainingPlanExercise(
@@ -97,7 +108,7 @@ internal fun rememberTrainingPlanDraft(): TrainingPlanDraft {
     val plannedSetCountInput = rememberSaveable { mutableStateOf("3") }
     val plannedRepsInput = rememberSaveable { mutableStateOf("10") }
     val plannedLoadInput = rememberSaveable { mutableStateOf("") }
-    val planScratchpad = remember { mutableStateOf(emptyList<TrainingPlanExercise>()) }
+    val planScratchpad = rememberSaveable { mutableStateOf(emptyList<TrainingPlanExercise>()) }
 
     return remember {
         TrainingPlanDraft(
