@@ -2,12 +2,14 @@ package app.caloriecore.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -231,9 +233,21 @@ private fun FirstLoadSpinner() {
 @Composable
 private fun SaveError(appState: AppState, strings: CalorieCoreStrings) {
     if (appState.saveFailed) {
-        Column(modifier = Modifier.statusBarsPadding().padding(12.dp)) {
-            Text(strings.saveFailed, color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = appState::retrySave) { Text(strings.tryAgain) }
+        Surface(
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+        ) {
+            Row(
+                modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(strings.saveFailed, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = appState::retrySave) { Text(strings.tryAgain) }
+            }
         }
     }
 }

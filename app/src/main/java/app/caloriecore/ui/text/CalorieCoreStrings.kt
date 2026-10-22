@@ -106,6 +106,10 @@ data class CalorieCoreStrings(
     val resetData: String,
     val light: String,
     val dark: String,
+    val ocean: String,
+    val sunset: String,
+    val lavender: String,
+    val black: String,
     val male: String,
     val female: String,
     val low: String,
@@ -223,6 +227,10 @@ data class CalorieCoreStrings(
         UiThemeMode.System -> system
         UiThemeMode.Light -> light
         UiThemeMode.Dark -> dark
+        UiThemeMode.Ocean -> ocean
+        UiThemeMode.Sunset -> sunset
+        UiThemeMode.Lavender -> lavender
+        UiThemeMode.Black -> black
     }
 
     fun sexDisplayName(sex: Sex): String = when (sex) {

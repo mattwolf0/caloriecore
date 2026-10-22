@@ -1,24 +1,17 @@
 package app.caloriecore.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.DayPicker
-import app.caloriecore.ui.components.LogCard
+import app.caloriecore.ui.components.PagePadding
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.ShelfHeader
-import app.caloriecore.ui.components.StatTile
 import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.PhoneStepState
@@ -26,9 +19,6 @@ import app.caloriecore.ui.model.phoneNowMillis
 import app.caloriecore.ui.model.pickedDayReport
 import app.caloriecore.ui.model.samePhoneDay
 import app.caloriecore.ui.text.CalorieCoreStrings
-import app.caloriecore.ui.theme.FoodAmber
-import app.caloriecore.ui.theme.GymGreen
-import app.caloriecore.ui.theme.WarningRed
 
 @Composable
 fun TodayScreen(
@@ -48,24 +38,23 @@ fun TodayScreen(
     val burnMath = pickedDayReport.burnEstimate
     val mealMath = pickedDayReport.nutrition
     val bodyCard = logbook.profile
+    val isToday = samePhoneDay(logbook.selectedDateTime, phoneNowMillis())
     var showBurnDetails by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PagePadding,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { ScreenName(title = strings.todayTitle) }
         item {
-            LogCard {
-                DayPicker(
-                    pickedMillis = logbook.selectedDateTime,
-                    onValueChange = onSelectedDateTimeChange,
-                    dateLabel = strings.date,
-                    todayText = strings.todayButton,
-                    previousDayText = strings.previousDay,
-                    nextDayText = strings.nextDay
-                )
-            }
+            DayPicker(
+                pickedMillis = logbook.selectedDateTime,
+                onValueChange = onSelectedDateTimeChange,
+                dateLabel = strings.date,
+                todayText = strings.todayButton,
+                previousDayText = strings.previousDay,
+                nextDayText = strings.nextDay
+            )
         }
         item {
             DailyBurnCard(
@@ -74,7 +63,15 @@ fun TodayScreen(
                 strings = strings
             )
         }
-        if (samePhoneDay(logbook.selectedDateTime, phoneNowMillis())) {
+        item {
+            BurnBreakdownCard(
+                burn = burnMath,
+                strings = strings,
+                expanded = showBurnDetails,
+                onToggle = { showBurnDetails = !showBurnDetails }
+            )
+        }
+        if (isToday) {
             item {
                 StepCounterCard(
                     state = phoneStepState,
@@ -105,61 +102,8 @@ fun TodayScreen(
                 profile = bodyCard,
                 strings = strings,
                 onProfileChange = onProfileChange,
-                phoneStepsOn = logbook.settings.usePhoneSteps && samePhoneDay(logbook.selectedDateTime, phoneNowMillis())
+                phoneStepsOn = logbook.settings.usePhoneSteps && isToday
             )
-        }
-        item {
-            TextButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { showBurnDetails = !showBurnDetails }
-            ) {
-                Text(if (showBurnDetails) strings.hideDetails else strings.showDetails)
-            }
-        }
-        if (showBurnDetails) {
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatTile(
-                        label = strings.bmr,
-                        metricText = burnMath.bmr.toString(),
-                        detail = strings.baseMetabolism,
-                        modifier = Modifier.weight(1f),
-                        accent = GymGreen
-                    )
-                    StatTile(
-                        label = strings.watch,
-                        metricText = burnMath.activeCalories.toString(),
-                        detail = strings.activeCalories,
-                        modifier = Modifier.weight(1f),
-                        accent = FoodAmber
-                    )
-                }
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatTile(
-                        label = strings.training,
-                        metricText = burnMath.plannedTraining.toString(),
-                        detail = strings.plannedWorkout,
-                        modifier = Modifier.weight(1f),
-                        accent = WarningRed
-                    )
-                    StatTile(
-                        label = strings.activity,
-                        metricText = burnMath.loggedActivityCalories.toString(),
-                        detail = strings.loggedActivity,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            item {
-                StatTile(
-                    label = strings.intake,
-                    metricText = mealMath.calories.toString(),
-                    detail = strings.food
-                )
-            }
-            item { BurnBreakdownCard(burn = burnMath, strings = strings) }
         }
     }
 }

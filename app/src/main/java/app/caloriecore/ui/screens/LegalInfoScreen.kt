@@ -3,21 +3,25 @@ package app.caloriecore.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
-import app.caloriecore.ui.components.ScreenName
+import app.caloriecore.ui.components.PagePadding
 import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.text.CalorieCoreStrings
 
@@ -29,15 +33,21 @@ internal fun LegalInfoScreen(strings: CalorieCoreStrings, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
 
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PagePadding,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            TextButton(onClick = onBack) {
-                Text("← ${strings.back}")
+            Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = strings.back)
+                }
+                Text(
+                    text = strings.legalAndDataSources,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
         }
-        item { ScreenName(title = strings.legalAndDataSources) }
         item {
             Text(
                 text = strings.legalInfoText,
@@ -66,7 +76,6 @@ internal fun LegalInfoScreen(strings: CalorieCoreStrings, onBack: () -> Unit) {
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(54.dp)) }
     }
 }
 
@@ -76,8 +85,7 @@ private fun LegalNoticeCard(notice: LegalNotice, openText: String, onOpen: () ->
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = notice.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium
             )
             Text(
                 text = notice.terms,

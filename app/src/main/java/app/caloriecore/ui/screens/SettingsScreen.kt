@@ -1,19 +1,26 @@
 package app.caloriecore.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,15 +32,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import app.caloriecore.ui.components.ClickableLogCard
 import app.caloriecore.ui.components.ConfirmActionDialog
 import app.caloriecore.ui.components.LogCard
+import app.caloriecore.ui.components.PagePadding
+import app.caloriecore.ui.components.RowsCard
 import app.caloriecore.ui.components.ScreenName
+import app.caloriecore.ui.components.SettingsRow
 import app.caloriecore.ui.components.ShelfHeader
-import app.caloriecore.ui.components.SolidActionButton
-import app.caloriecore.ui.components.StatTile
+import app.caloriecore.ui.components.StatCell
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.UiLanguage
@@ -41,8 +48,7 @@ import app.caloriecore.ui.model.UiThemeMode
 import app.caloriecore.ui.model.UserPreferences
 import app.caloriecore.ui.model.pickedDayReport
 import app.caloriecore.ui.text.CalorieCoreStrings
-import app.caloriecore.ui.theme.GymGreen
-import app.caloriecore.ui.theme.WarningRed
+import app.caloriecore.ui.theme.LineIcons
 
 @Composable
 fun SettingsScreen(logbook: Logbook, strings: CalorieCoreStrings, onSettingsChange: (UserPreferences) -> Unit, onReset: () -> Unit) {
@@ -99,93 +105,71 @@ fun SettingsScreen(logbook: Logbook, strings: CalorieCoreStrings, onSettingsChan
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PagePadding,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { ScreenName(title = strings.settingsTitle) }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatTile(
-                    label = strings.profileData,
-                    metricText = CalorieCoreFormatter.kilograms(logbook.profile.weightKg),
-                    detail = "${logbook.profile.heightCm} cm, ${strings.bmi} " +
-                        CalorieCoreFormatter.logDecimal(settingsDay.burnEstimate.bmi),
-                    modifier = Modifier.weight(1f),
-                    accent = GymGreen
-                )
-                StatTile(
-                    label = strings.restingHeartRate,
-                    metricText = logbook.profile.restingHeartRate.toString(),
-                    detail = CalorieCoreFormatter.bpm(logbook.profile.restingHeartRate),
-                    modifier = Modifier.weight(1f),
-                    accent = WarningRed
-                )
+            LogCard {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatCell(strings.weight, CalorieCoreFormatter.kilograms(logbook.profile.weightKg))
+                    StatCell(strings.height, "${logbook.profile.heightCm} cm")
+                    StatCell(strings.bmi, CalorieCoreFormatter.logDecimal(settingsDay.burnEstimate.bmi))
+                }
             }
         }
         item {
-            ClickableLogCard(onClick = { isLanguageDialogOpen = true }) {
-                SettingsPickerRow(
-                    label = strings.language,
-                    value = strings.languageDisplayName(logbook.settings.language)
-                )
+            RowsCard(SettingsItem.entries) { row ->
+                when (row) {
+                    SettingsItem.Language -> SettingsRow(
+                        icon = LineIcons.Language,
+                        label = strings.language,
+                        value = strings.languageDisplayName(logbook.settings.language),
+                        onClick = { isLanguageDialogOpen = true }
+                    )
+
+                    SettingsItem.Theme -> SettingsRow(
+                        icon = LineIcons.Theme,
+                        label = strings.theme,
+                        value = strings.themeDisplayName(logbook.settings.themeMode),
+                        onClick = { isThemeDialogOpen = true }
+                    )
+
+                    SettingsItem.Legal -> SettingsRow(
+                        icon = Icons.Rounded.Info,
+                        label = strings.legalAndDataSources,
+                        value = null,
+                        onClick = { showLegalInfo = true }
+                    )
+                }
             }
         }
-        item {
-            ClickableLogCard(onClick = { isThemeDialogOpen = true }) {
-                SettingsPickerRow(
-                    label = strings.theme,
-                    value = strings.themeDisplayName(logbook.settings.themeMode)
-                )
-            }
-        }
-        item {
-            ClickableLogCard(onClick = { showLegalInfo = true }) {
-                SettingsPickerRow(
-                    label = strings.legalAndDataSources,
-                    value = strings.view
-                )
-            }
-        }
+        item { ShelfHeader(strings.data) }
         item {
             LogCard {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    ShelfHeader(strings.data)
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text(
                         text = strings.privacyText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    SolidActionButton(
-                        text = strings.resetData,
-                        onClick = { isResetDialogOpen = true }
-                    )
+                    OutlinedButton(
+                        onClick = { isResetDialogOpen = true },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                    ) {
+                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(strings.resetData)
+                    }
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(54.dp)) }
     }
 }
 
-@Composable
-private fun SettingsPickerRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "$value ›",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
+private enum class SettingsItem { Language, Theme, Legal }
 
 @Composable
 private fun ThemePickerDialog(
