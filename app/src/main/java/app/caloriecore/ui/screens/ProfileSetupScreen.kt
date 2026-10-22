@@ -4,20 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.NumberInput
+import app.caloriecore.ui.components.PickRow
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.model.BodySnapshot
@@ -35,25 +31,20 @@ fun ProfileSetupScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item { ScreenName(title = strings.profileSetupTitle) }
         item {
             Text(
                 text = strings.profileSetupIntro,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         item {
             LogCard {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = strings.profileData,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(
                         text = strings.profileSetupRequired,
                         style = MaterialTheme.typography.bodySmall,
@@ -61,21 +52,15 @@ fun ProfileSetupScreen(
                     )
                     Text(
                         text = "${strings.gender} *",
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.titleSmall
                     )
-                    Row(
-                        modifier = Modifier.selectableGroup(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Sex.entries.forEach { sex ->
-                            FilterChip(
-                                selected = setup.sex == sex,
-                                onClick = { setup.sex = sex },
-                                label = { Text(strings.sexDisplayName(sex)) }
-                            )
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PickRow(
+                        options = Sex.entries,
+                        selected = setup.sex,
+                        label = strings::sexDisplayName,
+                        onSelect = { setup.sex = it }
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         NumberInput(
                             label = "${strings.age} *",
                             numberText = setup.ageInput,
@@ -92,7 +77,7 @@ fun ProfileSetupScreen(
                             isError = setup.heightInvalid
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         NumberInput(
                             label = "${strings.weight} *",
                             numberText = setup.weightInput,
@@ -132,6 +117,5 @@ fun ProfileSetupScreen(
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(20.dp)) }
     }
 }

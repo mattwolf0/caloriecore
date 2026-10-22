@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
@@ -20,17 +21,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.CardHeader
 import app.caloriecore.ui.components.LogCard
-import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.format.CalorieCoreFormatter
-import app.caloriecore.ui.theme.FoodAmber
-import app.caloriecore.ui.theme.GymGreen
-import app.caloriecore.ui.theme.WarningRed
 import kotlin.math.abs
 
 @Composable
 internal fun WeightLineCard(title: String, trailing: String, week: List<WeekLedgerPoint>, emptyText: String) {
-    val color = GymGreen
+    val color = MaterialTheme.colorScheme.primary
     val values = week.mapNotNull { it.weightKg }
     val minValue = values.minOrNull() ?: 0.0
     val maxValue = values.maxOrNull() ?: 0.0
@@ -40,7 +38,7 @@ internal fun WeightLineCard(title: String, trailing: String, week: List<WeekLedg
 
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShelfHeader(title, trailing)
+            CardHeader(title, trailing)
             if (values.isEmpty()) {
                 EmptyChartText(emptyText)
             } else {
@@ -97,6 +95,8 @@ internal fun WeightLineCard(title: String, trailing: String, week: List<WeekLedg
 @Composable
 internal fun BalanceBarsCard(title: String, trailing: String, week: List<WeekLedgerPoint>, emptyText: String) {
     val outlineColor = MaterialTheme.colorScheme.outline
+    val surplusColor = MaterialTheme.colorScheme.secondary
+    val deficitColor = MaterialTheme.colorScheme.primary
     val values = week.mapNotNull { it.balanceKcal }
     val chartDescription = "$title. " + week.joinToString { day ->
         "${day.label}: ${day.balanceKcal?.let { CalorieCoreFormatter.kcal(it) } ?: emptyText}"
@@ -104,7 +104,7 @@ internal fun BalanceBarsCard(title: String, trailing: String, week: List<WeekLed
 
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShelfHeader(title, trailing)
+            CardHeader(title, trailing)
             if (values.isEmpty()) {
                 EmptyChartText(emptyText)
             } else {
@@ -130,11 +130,12 @@ internal fun BalanceBarsCard(title: String, trailing: String, week: List<WeekLed
                             val barHeight = magnitude * (size.height * 0.45f)
                             val x = index * slot + (slot - barWidth) / 2f
                             val top = if (balance >= 0) centerY - barHeight else centerY
-                            val color = if (balance >= 0) FoodAmber else GymGreen
-                            drawRect(
+                            val color = if (balance >= 0) surplusColor else deficitColor
+                            drawRoundRect(
                                 color = color,
                                 topLeft = Offset(x, top),
-                                size = Size(barWidth, barHeight.coerceAtLeast(2.dp.toPx()))
+                                size = Size(barWidth, barHeight.coerceAtLeast(2.dp.toPx())),
+                                cornerRadius = CornerRadius(4.dp.toPx())
                             )
                         }
                     }
@@ -156,7 +157,7 @@ internal fun BalanceBarsCard(title: String, trailing: String, week: List<WeekLed
 
 @Composable
 internal fun VolumeBarsCard(title: String, trailing: String, week: List<WeekLedgerPoint>, emptyText: String) {
-    val color = WarningRed
+    val color = MaterialTheme.colorScheme.tertiary
     val values = week.mapNotNull { it.trainingVolumeKg }
     val displayMax = values.maxOrNull() ?: 0.0
     val maxValue = displayMax.takeIf { it > 0.0 } ?: 1.0
@@ -166,7 +167,7 @@ internal fun VolumeBarsCard(title: String, trailing: String, week: List<WeekLedg
 
     LogCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShelfHeader(title, trailing)
+            CardHeader(title, trailing)
             if (values.isEmpty()) {
                 EmptyChartText(emptyText)
             } else {
@@ -191,10 +192,11 @@ internal fun VolumeBarsCard(title: String, trailing: String, week: List<WeekLedg
                         day.trainingVolumeKg?.let { volume ->
                             val barHeight = ((volume / maxValue).toFloat() * size.height).coerceAtLeast(2.dp.toPx())
                             val x = index * slot + (slot - barWidth) / 2f
-                            drawRect(
+                            drawRoundRect(
                                 color = color,
                                 topLeft = Offset(x, size.height - barHeight),
-                                size = Size(barWidth, barHeight)
+                                size = Size(barWidth, barHeight),
+                                cornerRadius = CornerRadius(4.dp.toPx())
                             )
                         }
                     }

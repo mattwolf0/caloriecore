@@ -10,7 +10,11 @@ enum class UiLanguage {
 enum class UiThemeMode {
     System,
     Light,
-    Dark
+    Dark,
+    Ocean,
+    Sunset,
+    Lavender,
+    Black
 }
 
 data class UserPreferences(

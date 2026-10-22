@@ -85,7 +85,6 @@ internal class LegacyLogbookImport(private val db: SQLiteDatabase) {
                 for (index in 0 until plans.length()) {
                     val legacyPlan = plans.getJSONObject(index)
                     val title = legacyPlan.optString("title")
-                    // Do not keep the old default workout plans.
                     if (title !in LegacySeededProgramTitles && title.isNotBlank()) {
                         val id = legacyPlan.optLong("id", newLogId())
                         val exercises = mutableListOf<TrainingPlanExercise>()

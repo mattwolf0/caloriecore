@@ -12,33 +12,48 @@ val CompactGymTypography = Typography(
     displayMedium = TextStyle(
         fontFamily = PhoneSans,
         fontWeight = FontWeight.Bold,
-        fontSize = 34.sp,
-        lineHeight = 39.sp,
-        letterSpacing = (-0.3).sp
+        fontSize = 44.sp,
+        lineHeight = 50.sp,
+        letterSpacing = (-1).sp
     ),
     displaySmall = TextStyle(
         fontFamily = PhoneSans,
         fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        lineHeight = 32.sp
+        fontSize = 32.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-0.5).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = PhoneSans,
         fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 34.sp,
+        letterSpacing = (-0.4).sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = PhoneSans,
+        fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
-        lineHeight = 28.sp
+        lineHeight = 28.sp,
+        letterSpacing = (-0.2).sp
     ),
     titleLarge = TextStyle(
         fontFamily = PhoneSans,
-        fontWeight = FontWeight.Bold,
-        fontSize = 19.sp,
-        lineHeight = 25.sp
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
+        lineHeight = 26.sp
     ),
     titleMedium = TextStyle(
         fontFamily = PhoneSans,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 22.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = PhoneSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = PhoneSans,
@@ -66,8 +81,9 @@ val CompactGymTypography = Typography(
     ),
     labelMedium = TextStyle(
         fontFamily = PhoneSans,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
-        lineHeight = 16.sp
+        lineHeight = 16.sp,
+        letterSpacing = 0.2.sp
     )
 )

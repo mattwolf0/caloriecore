@@ -1,9 +1,16 @@
 package app.caloriecore.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -11,13 +18,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.model.PhoneStepState
 import app.caloriecore.ui.model.PhoneStepStatus
 import app.caloriecore.ui.text.CalorieCoreStrings
-import app.caloriecore.ui.theme.GymGreen
+import app.caloriecore.ui.theme.LineIcons
 
 @Composable
 fun StepCounterCard(
@@ -39,29 +46,44 @@ fun StepCounterCard(
     }
 
     LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = strings.steps,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = (if (usePhoneSteps) state.steps else manualSteps).toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = GymGreen,
-                fontWeight = FontWeight.Bold
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(strings.usePhoneSteps, modifier = Modifier.weight(1f))
-                Switch(checked = usePhoneSteps, onCheckedChange = onPhoneStepsChange)
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(LineIcons.Steps, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = strings.steps,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = (if (usePhoneSteps) state.steps else manualSteps).toString(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
-            if (!usePhoneSteps) Text(strings.manualSteps, style = MaterialTheme.typography.bodySmall)
-            if (usePhoneSteps && detail != null) {
-                Text(
-                    text = detail,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(strings.usePhoneSteps, style = MaterialTheme.typography.bodyMedium)
+                    val hint = if (!usePhoneSteps) strings.manualSteps else detail
+                    if (hint != null) {
+                        Text(
+                            text = hint,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Switch(checked = usePhoneSteps, onCheckedChange = onPhoneStepsChange)
             }
             if (usePhoneSteps && state.status == PhoneStepStatus.PermissionNeeded) {
                 Row {

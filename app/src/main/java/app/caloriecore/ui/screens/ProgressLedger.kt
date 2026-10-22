@@ -32,7 +32,6 @@ internal fun weekAroundPickedDay(logbook: Logbook, days: Int): List<WeekLedgerPo
     val anchorDate = Instant.ofEpochMilli(logbook.selectedDateTime).atZone(zone).toLocalDate()
     return (days - 1 downTo 0).map { offset ->
         val date = anchorDate.minusDays(offset.toLong())
-        // Use noon so DST does not move the day.
         val millis = date.noonBucketMillis(zone)
         val foodEntries = mealsOnPhoneDay(logbook.foodEntries, millis)
         val sessions = gymLogsOnPhoneDay(logbook.trainingSessions, millis)

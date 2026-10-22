@@ -55,7 +55,7 @@ class DraftScreensTest {
         val restore = StateRestorationTester(rule)
         restore.setContent { CalorieCoreApp() }
         openTab(strings.food)
-        rule.onNodeWithText(strings.edit).performClick()
+        rule.onNodeWithText("Bread").performClick()
         input(strings.serving).performScrollTo().performTextReplacement("200")
         input(strings.calories).assertTextContains("240")
         input(strings.protein).performScrollTo().performTextReplacement("22")
