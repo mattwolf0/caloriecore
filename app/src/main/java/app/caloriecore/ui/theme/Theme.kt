@@ -1,11 +1,16 @@
 package app.caloriecore.ui.theme
 
+import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import app.caloriecore.ui.model.UiThemeMode
 
 private val NightScheme = darkColorScheme(
@@ -15,7 +20,7 @@ private val NightScheme = darkColorScheme(
     onPrimaryContainer = ChalkText,
     secondary = FoodAmber,
     onSecondary = Color(0xFF1F1404),
-    secondaryContainer = ToastWash,
+    secondaryContainer = MossWash,
     onSecondaryContainer = ChalkText,
     tertiary = WarningRed,
     background = GymNight,
@@ -24,7 +29,7 @@ private val NightScheme = darkColorScheme(
     onSurface = ChalkText,
     surfaceVariant = NightHairline,
     onSurfaceVariant = FogText,
-    outline = NightHairline
+    outline = Color(0xFF6F7F74)
 )
 
 private val PaperScheme = lightColorScheme(
@@ -34,8 +39,8 @@ private val PaperScheme = lightColorScheme(
     onPrimaryContainer = GymGreen,
     secondary = FoodAmber,
     onSecondary = Color.White,
-    secondaryContainer = HoneyWash,
-    onSecondaryContainer = InkText,
+    secondaryContainer = MintWash,
+    onSecondaryContainer = GymGreen,
     tertiary = WarningRed,
     background = PaperWhite,
     onBackground = InkText,
@@ -43,7 +48,7 @@ private val PaperScheme = lightColorScheme(
     onSurface = InkText,
     surfaceVariant = PaperHairline,
     onSurfaceVariant = PencilText,
-    outline = PaperHairline
+    outline = Color(0xFF7D8C82)
 )
 
 @Composable
@@ -56,9 +61,23 @@ fun CalorieCoreTheme(
         UiThemeMode.Light -> false
         UiThemeMode.Dark -> true
     }
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window
+            if (window != null) {
+                WindowCompat.getInsetsController(window, view).apply {
+                    isAppearanceLightStatusBars = !useNightPalette
+                    isAppearanceLightNavigationBars = !useNightPalette
+                }
+            }
+        }
+    }
     MaterialTheme(
         colorScheme = if (useNightPalette) NightScheme else PaperScheme,
         typography = CompactGymTypography,
-        content = content
-    )
+        shapes = CalorieCoreShapes
+    ) {
+        ProvideTextStyle(MaterialTheme.typography.bodyMedium, content)
+    }
 }

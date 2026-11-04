@@ -18,6 +18,7 @@ import app.caloriecore.ui.model.UserPreferences
 import app.caloriecore.ui.model.canBeSaved
 import app.caloriecore.ui.model.putById
 import app.caloriecore.ui.model.withBodyCheckIn
+import app.caloriecore.ui.model.withClearedData
 import app.caloriecore.ui.model.withPickedMoment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -161,12 +162,7 @@ class AppState internal constructor(
     fun resetLogbook() {
         val current = logbook ?: return
         saveChanges(
-            Logbook(
-                selectedDateTime = current.selectedDateTime,
-                profile = current.profile.copy(loggedAt = current.selectedDateTime),
-                bodyHistory = emptyList(),
-                settings = current.settings
-            ).withPickedMoment(current.selectedDateTime)
+            current.withClearedData()
         )
     }
 

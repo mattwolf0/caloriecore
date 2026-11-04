@@ -1,6 +1,7 @@
 package app.caloriecore.ui.text
 
 import app.caloriecore.ui.model.BmiCategory
+import app.caloriecore.ui.model.NutritionGoal
 import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.model.SleepQuality
 import app.caloriecore.ui.model.UiLanguage
@@ -48,6 +49,13 @@ data class CalorieCoreStrings(
     val fat: String,
     val dailyMacros: String,
     val newMeal: String,
+    val customFood: String,
+    val foodBarcode: String,
+    val foodPhoto: String,
+    val foodSearch: String,
+    val imageRecognition: String,
+    val comingSoon: String,
+    val imageFoodSoon: String,
     val barcode: String,
     val findProductByBarcode: String,
     val lookingUp: String,
@@ -118,6 +126,10 @@ data class CalorieCoreStrings(
     val highSleep: String,
     val bmi: String,
     val macroTarget: String,
+    val goal: String = "Goal",
+    val buildMuscle: String = "Build muscle",
+    val loseFat: String = "Lose fat",
+    val maintainWeight: String = "Maintain weight",
     val logged: String,
     val items: String,
     val exercises: String,
@@ -134,8 +146,18 @@ data class CalorieCoreStrings(
     val completedToday: String = "Completed today",
     val doneToday: String = "Done today",
     val trendWindow: String = "Last 7 days",
+    val monthWindow: String = "Last 30 days",
+    val chartEmpty: String = "No entries in this period.",
+    val chartHint: String = "Tap the chart or use the arrows to pick a day.",
+    val bodyStats: String = "Body",
+    val periodSummary: String = "Period summary",
+    val workouts: String = "Workouts",
+    val daysLogged: String = "days logged",
+    val progressDataHint: String = "Averages use days with entries. Missing values stay blank.",
+    val openDay: String = "Open day",
+    val energyTrend: String = "Intake and burn",
+    val balanceHint: String = "Intake − burn",
     val weightTrend: String = "Body weight trend",
-    val calorieTrend: String = "Energy balance",
     val trainingTrend: String = "Training volume",
     val average: String = "Average",
     val change: String = "Change",
@@ -147,7 +169,7 @@ data class CalorieCoreStrings(
     val deleteConfirmTitle: String = "Delete entry?",
     val deleteConfirmText: String = "This cannot be undone.",
     val clearDataConfirmTitle: String = "Clear all local data?",
-    val clearDataConfirmText: String = "Meals, workouts and profile data will be permanently deleted.",
+    val clearDataConfirmText: String = "Meals, activities, workouts, plans and profile data will be deleted. Language and theme will stay.",
     val missingMacroData: String = "Some macro values are missing.",
     val showDetails: String = "Show details",
     val hideDetails: String = "Hide details",
@@ -191,7 +213,27 @@ data class CalorieCoreStrings(
     val profileSetupRequired: String = "Fields marked with * are required.",
     val profileSetupBodyFatHint: String = "Body fat is optional. Add it if you know it.",
     val profileSetupInvalid: String = "Check the entered values.",
-    val profileSetupContinue: String = "Save and continue"
+    val profileSetupContinue: String = "Save and continue",
+    val save: String = "Save",
+    val discardChanges: String = "Discard changes?",
+    val discardChangesText: String = "Your changes have not been saved.",
+    val discard: String = "Discard",
+    val keepEditing: String = "Keep editing",
+    val noMealsLogged: String = "No food logged yet.",
+    val burnShare: String = "Intake / burn",
+    val foodDigestion: String = "Food digestion",
+    val startWorkout: String = "Log workout",
+    val planSaveHint: String = "Enter a plan name and add at least one exercise.",
+    val exerciseInputHint: String = "Enter a name, sets and reps. Leave weight empty for bodyweight exercises.",
+    val workoutSaveHint: String = "Enter a title and add at least one set.",
+    val periodEnding: String = "Period ending",
+    val selectedDay: String = "Selected day",
+    val loggedDaysAverage: String = "Average of logged days",
+    val noActivityResults: String = "No matching activities.",
+    val activityMinutesHint: String = "Enter 1–1440 minutes.",
+    val changeActivity: String = "Change activity",
+    val chartZero: String = "All logged values are 0.",
+    val foodSaveHint: String = "Enter a name, a serving above 0 g and calories. Macros are optional."
 ) {
     fun dockLabel(tab: CalorieCoreTab): String = when (tab) {
         CalorieCoreTab.Today -> today
@@ -212,6 +254,12 @@ data class CalorieCoreStrings(
         UiThemeMode.System -> system
         UiThemeMode.Light -> light
         UiThemeMode.Dark -> dark
+    }
+
+    fun goalDisplayName(goal: NutritionGoal): String = when (goal) {
+        NutritionGoal.BuildMuscle -> buildMuscle
+        NutritionGoal.LoseFat -> loseFat
+        NutritionGoal.MaintainWeight -> maintainWeight
     }
 
     fun sexDisplayName(sex: Sex): String = when (sex) {

@@ -20,7 +20,7 @@ internal class TrainingPlanDraft internal constructor(
     private val plannedSetCountInputState: MutableState<String>,
     private val plannedRepsInputState: MutableState<String>,
     private val plannedLoadInputState: MutableState<String>,
-    private val planScratchpadState: MutableState<List<TrainingPlanExercise>>
+    private val planExercisesState: MutableState<List<TrainingPlanExercise>>
 ) {
     var openPlanId by openPlanIdState
     var planNameInput by planNameInputState
@@ -28,13 +28,18 @@ internal class TrainingPlanDraft internal constructor(
     var plannedSetCountInput by plannedSetCountInputState
     var plannedRepsInput by plannedRepsInputState
     var plannedLoadInput by plannedLoadInputState
-    var planScratchpad by planScratchpadState
+    var planExercises by planExercisesState
 
     val isEditing: Boolean
         get() = openPlanId != null
 
     val canSave: Boolean
-        get() = planNameInput.isNotBlank() && planScratchpad.isNotEmpty()
+        get() = planNameInput.isNotBlank() && planExercises.isNotEmpty()
+
+    val canAddExercise: Boolean
+        get() = exerciseNameInput.isNotBlank() && plannedSetCountInput.toIntOrNull() in 1..100 &&
+            plannedRepsInput.toIntOrNull() in 1..1000 &&
+            (plannedLoadInput.isBlank() || plannedLoadInput.toDoubleOrNull()?.let { it in 0.0..1000.0 } == true)
 
     fun clear() {
         openPlanId = null
@@ -43,13 +48,13 @@ internal class TrainingPlanDraft internal constructor(
         plannedSetCountInput = "3"
         plannedRepsInput = "10"
         plannedLoadInput = ""
-        planScratchpad = emptyList()
+        planExercises = emptyList()
     }
 
     fun reopen(plan: TrainingPlan) {
         openPlanId = plan.id
         planNameInput = plan.title
-        planScratchpad = plan.exercises
+        planExercises = plan.exercises
         exerciseNameInput = ""
         plannedSetCountInput = "3"
         plannedRepsInput = "10"
@@ -57,18 +62,19 @@ internal class TrainingPlanDraft internal constructor(
     }
 
     fun addExercise() {
-        val rackName = exerciseNameInput.trim()
-        if (rackName.isBlank()) return
-        val targetLine = PlannedSetBlock(
+        if (!canAddExercise) return
+        val exerciseName = exerciseNameInput.trim()
+        if (exerciseName.isBlank()) return
+        val plannedSet = PlannedSetBlock(
             setCount = plannedSetCountInput.toIntOrNull()?.coerceAtLeast(1) ?: 1,
             reps = plannedRepsInput.toIntOrNull()?.coerceAtLeast(1) ?: 1,
             weightKg = plannedLoadInput.toDoubleOrNull() ?: 0.0
         )
-        planScratchpad = planScratchpad + TrainingPlanExercise(
-            name = rackName,
+        planExercises = planExercises + TrainingPlanExercise(
+            name = exerciseName,
             target = "",
-            position = planScratchpad.size,
-            plannedSets = listOf(targetLine)
+            position = planExercises.size,
+            plannedSets = listOf(plannedSet)
         )
         exerciseNameInput = ""
         plannedSetCountInput = "3"
@@ -77,7 +83,7 @@ internal class TrainingPlanDraft internal constructor(
     }
 
     fun removeExercise(exerciseId: Long) {
-        planScratchpad = planScratchpad.filterNot { it.id == exerciseId }
+        planExercises = planExercises.filterNot { it.id == exerciseId }
     }
 
     fun buildPlan(): TrainingPlan = TrainingPlan(
@@ -85,7 +91,7 @@ internal class TrainingPlanDraft internal constructor(
         title = planNameInput.trim(),
         focus = "",
         daysPerWeek = 3,
-        exercises = planScratchpad.mapIndexed { index, exercise -> exercise.copy(position = index) }
+        exercises = planExercises.mapIndexed { index, exercise -> exercise.copy(position = index) }
     )
 }
 
@@ -97,7 +103,7 @@ internal fun rememberTrainingPlanDraft(): TrainingPlanDraft {
     val plannedSetCountInput = rememberSaveable { mutableStateOf("3") }
     val plannedRepsInput = rememberSaveable { mutableStateOf("10") }
     val plannedLoadInput = rememberSaveable { mutableStateOf("") }
-    val planScratchpad = remember { mutableStateOf(emptyList<TrainingPlanExercise>()) }
+    val planExercises = remember { mutableStateOf(emptyList<TrainingPlanExercise>()) }
 
     return remember {
         TrainingPlanDraft(
@@ -107,7 +113,7 @@ internal fun rememberTrainingPlanDraft(): TrainingPlanDraft {
             plannedSetCountInput,
             plannedRepsInput,
             plannedLoadInput,
-            planScratchpad
+            planExercises
         )
     }
 }

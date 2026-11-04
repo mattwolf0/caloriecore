@@ -2,15 +2,16 @@ package app.caloriecore.ui.components
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,10 +21,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.model.logDateText
 import app.caloriecore.ui.model.logTimeText
 import app.caloriecore.ui.model.samePhoneDay
+import app.caloriecore.ui.theme.UiSpacing
 import java.util.Calendar
 
 @Composable
@@ -71,15 +74,15 @@ fun LogMomentPicker(
         onValueChange(calendar.timeInMillis)
     }
 
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(UiSpacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             MomentChip(
                 onClick = { nudgePickedDay(-1) },
-                text = "−",
+                text = "‹",
                 contentDescription = previousDayText
             )
             MomentChip(
@@ -94,17 +97,18 @@ fun LogMomentPicker(
                         calendar.get(Calendar.DAY_OF_MONTH)
                     ).show()
                 },
-                text = "$dateLabel $pickedDateText"
+                text = pickedDateText,
+                contentDescription = "$dateLabel $pickedDateText"
             )
             MomentChip(
                 onClick = { nudgePickedDay(1) },
-                text = "+",
+                text = "›",
                 contentDescription = nextDayText
             )
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(UiSpacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             MomentChip(
@@ -153,7 +157,7 @@ fun DayPicker(
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(UiSpacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         MomentChip(
@@ -198,17 +202,19 @@ private fun MomentChip(
 ) {
     Box(
         modifier = modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(5.dp))
+            .heightIn(min = 48.dp)
+            .widthIn(min = 48.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
             .then(
                 if (contentDescription == null) Modifier else Modifier.semantics {
                     this.contentDescription = contentDescription
                 }
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(UiSpacing.small),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = text, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+        Text(text = text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
     }
 }

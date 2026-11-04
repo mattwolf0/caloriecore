@@ -19,6 +19,7 @@ internal fun upgradeDatabase(db: SQLiteDatabase, oldVersion: Int, newVersion: In
         if (oldVersion < 5) migrateToVersion5(db)
         if (oldVersion < 6) createActivityEntriesTable(db)
         if (oldVersion < 7) migrateToVersion7(db)
+        if (oldVersion < 8) migrateToVersion8(db)
     }
 }
 
@@ -53,4 +54,8 @@ private fun migrateToVersion5(db: SQLiteDatabase) {
 
 private fun migrateToVersion7(db: SQLiteDatabase) {
     db.execSQL("ALTER TABLE settings ADD COLUMN profile_setup_complete INTEGER NOT NULL DEFAULT 1")
+}
+
+private fun migrateToVersion8(db: SQLiteDatabase) {
+    db.execSQL("ALTER TABLE settings ADD COLUMN nutrition_goal TEXT NOT NULL DEFAULT 'MaintainWeight'")
 }

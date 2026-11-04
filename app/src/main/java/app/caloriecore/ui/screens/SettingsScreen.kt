@@ -4,20 +4,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,39 +26,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.ClickableLogCard
 import app.caloriecore.ui.components.ConfirmActionDialog
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.ShelfHeader
-import app.caloriecore.ui.components.SolidActionButton
-import app.caloriecore.ui.components.StatTile
-import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.Logbook
+import app.caloriecore.ui.model.NutritionGoal
 import app.caloriecore.ui.model.UiLanguage
 import app.caloriecore.ui.model.UiThemeMode
 import app.caloriecore.ui.model.UserPreferences
-import app.caloriecore.ui.model.pickedDayReport
 import app.caloriecore.ui.text.CalorieCoreStrings
-import app.caloriecore.ui.theme.GymGreen
-import app.caloriecore.ui.theme.WarningRed
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 fun SettingsScreen(
     logbook: Logbook,
     strings: CalorieCoreStrings,
     onSettingsChange: (UserPreferences) -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onSubpageChange: (Boolean) -> Unit = {}
 ) {
-    val settingsDay = logbook.pickedDayReport()
     var isLanguageDialogOpen by rememberSaveable { mutableStateOf(false) }
     var isThemeDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var isGoalDialogOpen by rememberSaveable { mutableStateOf(false) }
     var isResetDialogOpen by rememberSaveable { mutableStateOf(false) }
     var showLegalInfo by rememberSaveable { mutableStateOf(false) }
 
     if (showLegalInfo) {
+        DisposableEffect(Unit) {
+            onSubpageChange(true)
+            onDispose { onSubpageChange(false) }
+        }
         LegalInfoScreen(
             strings = strings,
             onBack = { showLegalInfo = false }
@@ -89,6 +90,18 @@ fun SettingsScreen(
         )
     }
 
+    if (isGoalDialogOpen) {
+        GoalPickerDialog(
+            selectedGoal = logbook.settings.nutritionGoal,
+            strings = strings,
+            onGoalSelected = { goal ->
+                onSettingsChange(logbook.settings.copy(nutritionGoal = goal))
+                isGoalDialogOpen = false
+            },
+            onDismiss = { isGoalDialogOpen = false }
+        )
+    }
+
     if (isResetDialogOpen) {
         ConfirmActionDialog(
             title = strings.clearDataConfirmTitle,
@@ -104,29 +117,10 @@ fun SettingsScreen(
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(UiSpacing.page),
+        verticalArrangement = Arrangement.spacedBy(UiSpacing.section)
     ) {
         item { ScreenName(title = strings.settingsTitle) }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatTile(
-                    label = strings.profileData,
-                    metricText = CalorieCoreFormatter.kilograms(logbook.profile.weightKg),
-                    detail = "${logbook.profile.heightCm} cm, ${strings.bmi} " +
-                        CalorieCoreFormatter.logDecimal(settingsDay.burnEstimate.bmi),
-                    modifier = Modifier.weight(1f),
-                    accent = GymGreen
-                )
-                StatTile(
-                    label = strings.restingHeartRate,
-                    metricText = logbook.profile.restingHeartRate.toString(),
-                    detail = CalorieCoreFormatter.bpm(logbook.profile.restingHeartRate),
-                    modifier = Modifier.weight(1f),
-                    accent = WarningRed
-                )
-            }
-        }
         item {
             ClickableLogCard(onClick = { isLanguageDialogOpen = true }) {
                 SettingsPickerRow(
@@ -144,6 +138,14 @@ fun SettingsScreen(
             }
         }
         item {
+            ClickableLogCard(onClick = { isGoalDialogOpen = true }) {
+                SettingsPickerRow(
+                    label = strings.goal,
+                    value = strings.goalDisplayName(logbook.settings.nutritionGoal)
+                )
+            }
+        }
+        item {
             ClickableLogCard(onClick = { showLegalInfo = true }) {
                 SettingsPickerRow(
                     label = strings.legalAndDataSources,
@@ -153,43 +155,28 @@ fun SettingsScreen(
         }
         item {
             LogCard {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
                     ShelfHeader(strings.data)
                     Text(
                         text = strings.privacyText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    SolidActionButton(
-                        text = strings.resetData,
-                        onClick = { isResetDialogOpen = true }
-                    )
+                    OutlinedButton(
+                        onClick = { isResetDialogOpen = true },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) { Text(strings.resetData) }
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(54.dp)) }
     }
 }
 
 @Composable
 private fun SettingsPickerRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "$value ›",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
+    ShelfHeader(label, "$value ›")
 }
 
 @Composable
@@ -221,6 +208,49 @@ private fun ThemePickerDialog(
                         RadioButton(selected = isSelected, onClick = null)
                         Text(
                             text = strings.themeDisplayName(theme),
+                            modifier = Modifier.padding(start = 12.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(strings.close)
+            }
+        }
+    )
+}
+
+@Composable
+private fun GoalPickerDialog(
+    selectedGoal: NutritionGoal,
+    strings: CalorieCoreStrings,
+    onGoalSelected: (NutritionGoal) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(strings.goal) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                NutritionGoal.entries.forEach { goal ->
+                    val isSelected = goal == selectedGoal
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .selectable(
+                                selected = isSelected,
+                                role = Role.RadioButton,
+                                onClick = { onGoalSelected(goal) }
+                            )
+                            .padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = isSelected, onClick = null)
+                        Text(
+                            text = strings.goalDisplayName(goal),
                             modifier = Modifier.padding(start = 12.dp)
                         )
                     }

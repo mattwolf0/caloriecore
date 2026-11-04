@@ -1,9 +1,13 @@
 package app.caloriecore.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -11,11 +15,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.EditorActions
+import app.caloriecore.ui.components.InputRow
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.MiniBadge
 import app.caloriecore.ui.components.NumberInput
+import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.format.CalorieCoreFormatter
@@ -26,36 +33,27 @@ import app.caloriecore.ui.model.activeCaloriesTotal
 import app.caloriecore.ui.model.searchActivities
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 internal fun ActivityLogCard(
     entries: List<ActivityEntry>,
     strings: CalorieCoreStrings,
-    editorOpen: Boolean,
+    isEditorOpen: Boolean,
     onAdd: () -> Unit,
     onEdit: (ActivityEntry) -> Unit,
     onDelete: (ActivityEntry) -> Unit
 ) {
     LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
             ShelfHeader(
                 title = strings.activity,
                 trailing = CalorieCoreFormatter.kcal(entries.activeCaloriesTotal())
             )
-            Text(
-                text = strings.activityDoubleCountWarning,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (!editorOpen) {
+            if (!isEditorOpen) {
                 SolidActionButton(text = strings.addActivity, onClick = onAdd)
             }
-            if (entries.isEmpty()) {
-                Text(
-                    text = strings.noActivities,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
+            if (entries.isNotEmpty()) {
                 entries.forEach { entry ->
                     ActivityRow(
                         entry = entry,
@@ -76,13 +74,12 @@ private fun ActivityRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(entry.name, fontWeight = FontWeight.Bold)
+        Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)) {
+            Text(entry.name, style = MaterialTheme.typography.titleMedium)
             val minutes = entry.durationMinutes?.let { "$it ${strings.minutes.lowercase()} · " }.orEmpty()
             Text(
                 text = "$minutes${CalorieCoreFormatter.kcal(entry.activeCalories)}",
@@ -90,9 +87,9 @@ private fun ActivityRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Row {
-            TextButton(onClick = onEdit) { Text(strings.edit) }
-            TextButton(onClick = onDelete) { Text(strings.delete) }
+        InputRow {
+            TextButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text(strings.edit) }
+            TextButton(onClick = onDelete, modifier = Modifier.weight(1f)) { Text(strings.delete) }
         }
     }
 }
@@ -113,43 +110,51 @@ internal fun ActivityEditor(
         emptyList()
     }
 
-    LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            ShelfHeader(
-                title = if (draft.editingId == null) strings.addActivity else strings.updateActivity
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(
-                    enabled = draft.mode != ActivityMode.Catalog,
-                    onClick = state::useCatalog
-                ) { Text(strings.activityList) }
-                TextButton(
-                    enabled = draft.mode != ActivityMode.Other,
-                    onClick = state::useOther
-                ) { Text(strings.otherActivity) }
-            }
-
-            if (draft.mode == ActivityMode.Catalog) {
-                CatalogActivityFields(
-                    state = state,
-                    results = results,
-                    language = language,
-                    strings = strings
-                )
-            } else {
-                OtherActivityFields(state = state, strings = strings)
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SolidActionButton(
-                    text = if (draft.editingId == null) strings.addActivity else strings.updateActivity,
-                    enabled = draft.canSave,
-                    modifier = Modifier.weight(1f),
-                    onClick = { draft.buildEntry()?.let(onSave) }
-                )
-                TextButton(onClick = onClose) { Text(strings.close) }
+    Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+        ScreenName(if (draft.editingId == null) strings.addActivity else strings.updateActivity)
+        LogCard {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
+                InputRow {
+                    FilterChip(
+                        selected = draft.mode == ActivityMode.Catalog,
+                        onClick = state::useCatalog,
+                        label = { Text(strings.activityList) },
+                        leadingIcon = if (draft.mode == ActivityMode.Catalog) ({ Text("✓") }) else null,
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilterChip(
+                        selected = draft.mode == ActivityMode.Other,
+                        onClick = state::useOther,
+                        label = { Text(strings.otherActivity) },
+                        leadingIcon = if (draft.mode == ActivityMode.Other) ({ Text("✓") }) else null,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Text(strings.activityDoubleCountWarning, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        LogCard {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+                if (draft.mode == ActivityMode.Catalog) {
+                    CatalogActivityFields(
+                        state = state,
+                        results = results,
+                        language = language,
+                        strings = strings
+                    )
+                } else {
+                    OtherActivityFields(state = state, strings = strings)
+                }
+            }
+        }
+        EditorActions(
+            saveText = if (draft.editingId == null) strings.addActivity else strings.updateActivity,
+            canSave = draft.canSave,
+            strings = strings,
+            onSave = { draft.buildEntry()?.let(onSave) },
+            onCancel = onClose
+        )
     }
 }
 
@@ -161,38 +166,52 @@ private fun CatalogActivityFields(
     strings: CalorieCoreStrings
 ) {
     val draft = state.draft
-    OutlinedTextField(
+    val focus = LocalFocusManager.current
+    if (draft.catalogCode == null) OutlinedTextField(
         modifier = Modifier.fillMaxWidth(),
         value = draft.searchText,
         onValueChange = state::updateSearch,
         label = { Text(strings.searchActivity) },
-        singleLine = true
+        shape = MaterialTheme.shapes.small, singleLine = true
     )
-    results.forEach { item ->
-        TextButton(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { state.pick(item, language) }
-        ) {
-            Text(
-                text = "${item.nameFor(language)} · ${CalorieCoreFormatter.logDecimal(item.met)} MET",
+    if (results.isNotEmpty()) Column {
+        results.forEach { item ->
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            Column(
                 modifier = Modifier.fillMaxWidth()
-            )
+                    .clickable { focus.clearFocus(); state.pick(item, language) }
+                    .padding(vertical = UiSpacing.content),
+                verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)
+            ) {
+                Text(item.nameFor(language), style = MaterialTheme.typography.bodyMedium)
+                Text("${CalorieCoreFormatter.logDecimal(item.met)} MET",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
+    }
+    if (draft.catalogCode == null && results.isEmpty()) {
+        Text(strings.noActivityResults, style = MaterialTheme.typography.bodySmall)
     }
     if (draft.catalogCode != null) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(UiSpacing.content),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(draft.pickedName, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(draft.pickedName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             MiniBadge("${CalorieCoreFormatter.logDecimal(draft.met ?: 0.0)} MET", color = FoodAmber)
         }
+        TextButton(onClick = { state.updateSearch("") }) { Text(strings.changeActivity) }
         NumberInput(
             label = strings.minutes,
             numberText = draft.minutes,
-            onValueChange = state::updateMinutes
+            onValueChange = state::updateMinutes,
+            isError = draft.minutes.isNotEmpty() && draft.minutes.toIntOrNull() !in 1..1440
         )
+        if (draft.minutes.toIntOrNull() !in 1..1440) {
+            Text(strings.activityMinutesHint, color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall)
+        }
         Text(
             text = "${strings.weightUsed}: ${CalorieCoreFormatter.kilograms(draft.weightKg)}",
             style = MaterialTheme.typography.bodySmall,
@@ -218,7 +237,7 @@ private fun OtherActivityFields(state: ActivityDraftState, strings: CalorieCoreS
         value = draft.otherName,
         onValueChange = state::updateOtherName,
         label = { Text(strings.otherActivityName) },
-        singleLine = true
+        shape = MaterialTheme.shapes.small, singleLine = true
     )
     NumberInput(
         label = strings.activeCalories,

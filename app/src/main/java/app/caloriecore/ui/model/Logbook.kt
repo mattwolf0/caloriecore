@@ -38,6 +38,11 @@ fun Logbook.withPickedMoment(nextDateTime: Long): Logbook = copy(
     profile = nearestBodyCheckIn(bodyHistory, nextDateTime)
 )
 
+fun Logbook.withClearedData(): Logbook = Logbook(
+    bodyHistory = emptyList(),
+    settings = settings.copy(profileSetupComplete = false)
+)
+
 fun Logbook.withBodyCheckIn(nextProfile: BodySnapshot): Logbook {
     val normalized = nextProfile.copy(loggedAt = selectedDateTime)
     val nextHistory = bodyHistory

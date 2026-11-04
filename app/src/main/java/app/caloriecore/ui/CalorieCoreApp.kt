@@ -1,8 +1,11 @@
 package app.caloriecore.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -46,6 +49,8 @@ fun CalorieCoreApp() {
         enabled = appState.logbook?.settings?.profileSetupComplete == true
     )
     var currentTab by rememberSaveable { mutableStateOf(CalorieCoreTab.Today) }
+    var showFoodEditor by rememberSaveable { mutableStateOf(false) }
+    var isEditorOpen by remember { mutableStateOf(false) }
     var lastStepSaveAt by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(appState) {
@@ -55,6 +60,7 @@ fun CalorieCoreApp() {
     LaunchedEffect(phoneSteps.state, appState.logbook?.selectedDateTime) {
         val logbook = appState.logbook ?: return@LaunchedEffect
         if (
+            logbook.settings.profileSetupComplete &&
             phoneSteps.state.status == PhoneStepStatus.Active &&
             samePhoneDay(logbook.selectedDateTime, phoneNowMillis()) &&
             logbook.profile.steps != phoneSteps.state.steps
@@ -66,6 +72,7 @@ fun CalorieCoreApp() {
 
             val currentLogbook = appState.logbook ?: return@LaunchedEffect
             if (
+                currentLogbook.settings.profileSetupComplete &&
                 phoneSteps.state.status == PhoneStepStatus.Active &&
                 samePhoneDay(currentLogbook.selectedDateTime, phoneNowMillis()) &&
                 currentLogbook.profile.steps != phoneSteps.state.steps
@@ -102,57 +109,80 @@ fun CalorieCoreApp() {
                         modifier = Modifier.fillMaxSize(),
                         containerColor = Color.Transparent,
                         bottomBar = {
-                            BottomDock(
+                            if (!isEditorOpen) BottomDock(
                                 currentTab = currentTab,
                                 tabLabel = strings::dockLabel,
-                                onSelect = { currentTab = it }
+                                onSelect = {
+                                    showFoodEditor = false
+                                    currentTab = it
+                                }
                             )
                         }
                     ) { innerPadding ->
-                        Box(modifier = Modifier.padding(innerPadding)) {
-                            when (currentTab) {
-                                CalorieCoreTab.Today -> TodayScreen(
-                                    logbook = logbook,
-                                    strings = strings,
-                                    onSelectedDateTimeChange = appState::jumpToMoment,
-                                    onProfileChange = appState::saveBodyEntry,
-                                    phoneStepState = phoneSteps.state
-                                )
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(innerPadding)
+                                .consumeWindowInsets(innerPadding).imePadding(),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            Box(Modifier.widthIn(max = 760.dp)) {
+                                when (currentTab) {
+                                    CalorieCoreTab.Today -> TodayScreen(
+                                        logbook = logbook,
+                                        strings = strings,
+                                        onSelectedDateTimeChange = appState::jumpToMoment,
+                                        onProfileChange = appState::saveBodyEntry,
+                                        phoneStepState = phoneSteps.state,
+                                        onOpenFood = {
+                                            showFoodEditor = true
+                                            currentTab = CalorieCoreTab.Food
+                                        },
+                                        onOpenTraining = { currentTab = CalorieCoreTab.Train },
+                                        onEditorOpenChange = { isEditorOpen = it }
+                                    )
 
-                                CalorieCoreTab.Food -> FoodScreen(
-                                    logbook = logbook,
-                                    strings = strings,
-                                    onSelectedDateTimeChange = appState::jumpToMoment,
-                                    onSaveFoodEntry = appState::saveMeal,
-                                    onRemoveFoodEntry = appState::deleteMeal
-                                )
+                                    CalorieCoreTab.Food -> FoodScreen(
+                                        logbook = logbook,
+                                        strings = strings,
+                                        onSelectedDateTimeChange = appState::jumpToMoment,
+                                        onSaveFoodEntry = appState::saveMeal,
+                                        onRemoveFoodEntry = appState::deleteMeal,
+                                        openEditorOnStart = showFoodEditor,
+                                        onEditorOpenChange = { isEditorOpen = it }
+                                    )
 
-                                CalorieCoreTab.Train -> TrainScreen(
-                                    logbook = logbook,
-                                    strings = strings,
-                                    onSelectedDateTimeChange = appState::jumpToMoment,
-                                    activityCatalog = appState.activityCatalog?.items.orEmpty(),
-                                    activityLanguage = resolveCalorieCoreLanguage(logbook.settings.language),
-                                    onSaveActivity = appState::saveActivity,
-                                    onRemoveActivity = appState::deleteActivity,
-                                    onSavePlan = appState::savePlan,
-                                    onRemovePlan = appState::deletePlan,
-                                    onSaveSession = appState::saveWorkout,
-                                    onRemoveSession = appState::deleteWorkout
-                                )
+                                    CalorieCoreTab.Train -> TrainScreen(
+                                        logbook = logbook,
+                                        strings = strings,
+                                        onSelectedDateTimeChange = appState::jumpToMoment,
+                                        activityCatalog = appState.activityCatalog?.items.orEmpty(),
+                                        activityLanguage = resolveCalorieCoreLanguage(logbook.settings.language),
+                                        onSaveActivity = appState::saveActivity,
+                                        onRemoveActivity = appState::deleteActivity,
+                                        onSavePlan = appState::savePlan,
+                                        onRemovePlan = appState::deletePlan,
+                                        onSaveSession = appState::saveWorkout,
+                                        onRemoveSession = appState::deleteWorkout,
+                                        onEditorOpenChange = { isEditorOpen = it }
+                                    )
 
-                                CalorieCoreTab.Progress -> ProgressScreen(
-                                    logbook = logbook,
-                                    strings = strings,
-                                    onSelectedDateTimeChange = appState::jumpToMoment
-                                )
+                                    CalorieCoreTab.Progress -> ProgressScreen(
+                                        logbook = logbook,
+                                        strings = strings,
+                                        onSelectedDateTimeChange = appState::jumpToMoment,
+                                        onOpenDay = { day ->
+                                            appState.jumpToMoment(day)
+                                            currentTab = CalorieCoreTab.Today
+                                        }
+                                    )
 
-                                CalorieCoreTab.Settings -> SettingsScreen(
-                                    logbook = logbook,
-                                    strings = strings,
-                                    onSettingsChange = appState::saveSettings,
-                                    onReset = appState::resetLogbook
-                                )
+                                    CalorieCoreTab.Settings -> SettingsScreen(
+                                        logbook = logbook,
+                                        strings = strings,
+                                        onSettingsChange = appState::saveSettings,
+                                        onReset = appState::resetLogbook,
+                                        onSubpageChange = { isEditorOpen = it }
+                                    )
+                                }
                             }
                         }
                     }

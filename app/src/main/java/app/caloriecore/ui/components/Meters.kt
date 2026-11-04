@@ -2,7 +2,6 @@ package app.caloriecore.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,14 +20,12 @@ import app.caloriecore.ui.format.CalorieCoreFormatter
 @Composable
 fun MacroMeter(label: String, grams: Double, target: Double, color: Color, modifier: Modifier = Modifier) {
     val progress = (grams / target).coerceIn(0.0, 1.0).toFloat()
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-            Text(
-                text = "${CalorieCoreFormatter.grams(grams)} / ${CalorieCoreFormatter.grams(target)}",
-                style = MaterialTheme.typography.labelMedium
-            )
-        }
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = color)
+        Text(
+            text = "${CalorieCoreFormatter.grams(grams)} / ${CalorieCoreFormatter.grams(target)}",
+            style = MaterialTheme.typography.labelMedium
+        )
         Spacer(modifier = Modifier.height(5.dp))
         LinearProgressIndicator(
             progress = { progress },

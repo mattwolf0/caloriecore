@@ -6,220 +6,154 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.EditorActions
+import app.caloriecore.ui.components.InputRow
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.NumberInput
+import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.keepLogNumberText
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.text.CalorieCoreStrings
-import app.caloriecore.ui.theme.FoodAmber
-import app.caloriecore.ui.theme.GymGreen
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
-fun BodyMetricsEditor(profile: BodySnapshot, strings: CalorieCoreStrings, onProfileChange: (BodySnapshot) -> Unit) {
-    var bodyCardOpen by rememberSaveable(profile.loggedAt) { mutableStateOf(false) }
-
+internal fun ProfileSummary(profile: BodySnapshot, strings: CalorieCoreStrings, onEdit: () -> Unit) {
     LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            if (!bodyCardOpen) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            ProfileMetric(
-                                label = strings.weight,
-                                value = CalorieCoreFormatter.kilograms(profile.weightKg),
-                                color = GymGreen,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ProfileMetric(
-                                label = strings.height,
-                                value = "${profile.heightCm} cm",
-                                color = FoodAmber,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            ProfileMetric(
-                                label = strings.steps,
-                                value = profile.steps.toString(),
-                                color = GymGreen,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ProfileMetric(
-                                label = strings.restingHeartRate,
-                                value = CalorieCoreFormatter.bpm(profile.restingHeartRate),
-                                color = FoodAmber,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                    TextButton(onClick = { bodyCardOpen = true }) { Text(strings.edit) }
-                }
-                return@Column
+        Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(strings.profileData, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                OutlinedButton(onClick = onEdit, shape = MaterialTheme.shapes.small) { Text(strings.edit) }
             }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    text = strings.profileData,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                TextButton(onClick = { bodyCardOpen = false }) { Text(strings.close) }
+            InputRow {
+                ProfileMetric(strings.weight, CalorieCoreFormatter.kilograms(profile.weightKg), Modifier.weight(1f))
+                ProfileMetric(strings.height, "${profile.heightCm} cm", Modifier.weight(1f))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Sex.entries.forEach { sex ->
-                    FilterChip(
-                        selected = profile.sex == sex,
-                        onClick = { onProfileChange(profile.copy(sex = sex)) },
-                        label = { Text(strings.sexDisplayName(sex)) }
-                    )
-                }
+            InputRow {
+                ProfileMetric(strings.age, profile.age.toString(), Modifier.weight(1f))
+                ProfileMetric(strings.bodyFat, profile.bodyFatPercent?.let { "${CalorieCoreFormatter.logDecimal(it)}%" } ?: "—", Modifier.weight(1f))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberInput(
-                    label = strings.age,
-                    numberText = profile.age.toString(),
-                    onValueChange = { typedAge ->
-                        keepLogNumberText(typedAge).toIntOrNull()?.let { onProfileChange(profile.copy(age = it)) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                NumberInput(
-                    label = strings.height,
-                    numberText = profile.heightCm.toString(),
-                    onValueChange = { typedHeight ->
-                        keepLogNumberText(typedHeight).toIntOrNull()?.let { onProfileChange(profile.copy(heightCm = it)) }
-                    },
-                    modifier = Modifier.weight(1f),
-                    suffix = "cm"
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberInput(
-                    label = strings.weight,
-                    numberText = CalorieCoreFormatter.logDecimal(profile.weightKg),
-                    onValueChange = { typedWeight ->
-                        keepLogNumberText(typedWeight, allowDecimal = true).toDoubleOrNull()?.let {
-                            onProfileChange(profile.copy(weightKg = it))
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    suffix = "kg",
-                    allowDecimal = true
-                )
-                NumberInput(
-                    label = strings.bodyFat,
-                    numberText = profile.bodyFatPercent?.let(CalorieCoreFormatter::logDecimal) ?: "",
-                    onValueChange = { typedBodyFat ->
-                        val cleaned = keepLogNumberText(typedBodyFat, allowDecimal = true)
-                        onProfileChange(profile.copy(bodyFatPercent = cleaned.toDoubleOrNull()))
-                    },
-                    modifier = Modifier.weight(1f),
-                    suffix = "%",
-                    allowDecimal = true
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberInput(
-                    label = strings.sleep,
-                    numberText = CalorieCoreFormatter.logDecimal(profile.sleepHours),
-                    onValueChange = { typedSleep ->
-                        keepLogNumberText(typedSleep, allowDecimal = true).toDoubleOrNull()?.let {
-                            onProfileChange(profile.copy(sleepHours = it))
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    suffix = "h",
-                    allowDecimal = true
-                )
-                NumberInput(
-                    label = strings.restingHeartRate,
-                    numberText = profile.restingHeartRate.toString(),
-                    onValueChange = { typedPulse ->
-                        keepLogNumberText(typedPulse).toIntOrNull()?.let {
-                            onProfileChange(profile.copy(restingHeartRate = it))
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    suffix = "bpm"
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberInput(
-                    label = strings.activeCalories,
-                    numberText = profile.watchActiveCalories.toString(),
-                    onValueChange = { typedActiveKcal ->
-                        keepLogNumberText(typedActiveKcal).toIntOrNull()?.let {
-                            onProfileChange(profile.copy(watchActiveCalories = it))
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                NumberInput(
-                    label = strings.steps,
-                    numberText = profile.steps.toString(),
-                    onValueChange = { typedSteps ->
-                        keepLogNumberText(typedSteps).toIntOrNull()?.let { onProfileChange(profile.copy(steps = it)) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            NumberInput(
-                label = strings.trainingCalories,
-                numberText = profile.plannedWorkoutCalories.toString(),
-                onValueChange = { typedTrainingKcal ->
-                    keepLogNumberText(typedTrainingKcal).toIntOrNull()?.let {
-                        onProfileChange(profile.copy(plannedWorkoutCalories = it))
-                    }
-                }
-            )
         }
     }
 }
 
 @Composable
-private fun ProfileMetric(
-    label: String,
-    value: String,
-    color: Color,
-    modifier: Modifier = Modifier
+internal fun BodyMetricsEditor(
+    draft: BodyDraft,
+    strings: CalorieCoreStrings,
+    onChange: (BodyDraft) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+        ScreenName(strings.profileData)
+        LogCard {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+                InputRow {
+                    Sex.entries.forEach { sex ->
+                        FilterChip(draft.sex == sex, { onChange(draft.copy(sex = sex)) }, { Text(strings.sexDisplayName(sex)) })
+                    }
+                }
+                InputRow {
+                    NumberInput(
+                        label = strings.age,
+                        numberText = draft.age,
+                        onValueChange = { onChange(draft.copy(age = keepLogNumberText(it))) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    NumberInput(
+                        label = strings.height,
+                        numberText = draft.height,
+                        onValueChange = { onChange(draft.copy(height = keepLogNumberText(it))) },
+                        modifier = Modifier.weight(1f),
+                        suffix = "cm"
+                    )
+                }
+                InputRow {
+                    NumberInput(
+                        label = strings.weight,
+                        numberText = draft.weight,
+                        onValueChange = { onChange(draft.copy(weight = keepLogNumberText(it, true))) },
+                        modifier = Modifier.weight(1f),
+                        suffix = "kg",
+                        allowDecimal = true
+                    )
+                    NumberInput(
+                        label = strings.bodyFat,
+                        numberText = draft.bodyFat,
+                        onValueChange = { onChange(draft.copy(bodyFat = keepLogNumberText(it, true))) },
+                        modifier = Modifier.weight(1f),
+                        suffix = "%",
+                        allowDecimal = true
+                    )
+                }
+                Text(strings.profileSetupBodyFatHint, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        LogCard {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+                InputRow {
+                    NumberInput(
+                        label = strings.sleep,
+                        numberText = draft.sleep,
+                        onValueChange = { onChange(draft.copy(sleep = keepLogNumberText(it, true))) },
+                        modifier = Modifier.weight(1f),
+                        suffix = "h",
+                        allowDecimal = true
+                    )
+                    NumberInput(
+                        label = strings.restingHeartRate,
+                        numberText = draft.pulse,
+                        onValueChange = { onChange(draft.copy(pulse = keepLogNumberText(it))) },
+                        modifier = Modifier.weight(1f),
+                        suffix = "bpm"
+                    )
+                }
+                InputRow {
+                    NumberInput(
+                        label = strings.watchActivity,
+                        numberText = draft.activeKcal,
+                        onValueChange = { onChange(draft.copy(activeKcal = keepLogNumberText(it))) },
+                        modifier = Modifier.weight(1f),
+                        suffix = "kcal"
+                    )
+                    NumberInput(
+                        label = strings.steps,
+                        numberText = draft.steps,
+                        onValueChange = { onChange(draft.copy(steps = keepLogNumberText(it))) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                NumberInput(
+                    label = strings.trainingCalories,
+                    numberText = draft.trainingKcal,
+                    onValueChange = { onChange(draft.copy(trainingKcal = keepLogNumberText(it))) },
+                    suffix = "kcal"
+                )
+                if (!draft.canSave) Text(strings.profileSetupInvalid, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        EditorActions(
+            saveText = strings.save,
+            canSave = draft.canSave,
+            strings = strings,
+            onSave = onSave,
+            onCancel = onCancel
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = color,
-            fontWeight = FontWeight.Bold
-        )
+    }
+}
+
+@Composable
+private fun ProfileMetric(label: String, value: String, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     }
 }

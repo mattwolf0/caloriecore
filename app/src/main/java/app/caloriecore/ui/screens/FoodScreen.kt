@@ -2,8 +2,6 @@ package app.caloriecore.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,21 +11,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import app.caloriecore.data.FoodBarcodeReader
 import app.caloriecore.data.FoodFactsClient
 import app.caloriecore.ui.components.ConfirmActionDialog
-import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.DayPicker
+import app.caloriecore.ui.components.EditorPage
+import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.SolidActionButton
-import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.FoodEntry
-import app.caloriecore.ui.model.foodRowsForPickedDay
+import app.caloriecore.ui.model.Logbook
+import app.caloriecore.ui.model.macroTargetFor
 import app.caloriecore.ui.model.pickedDayReport
 import app.caloriecore.ui.text.CalorieCoreStrings
+import app.caloriecore.ui.theme.UiSpacing
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @Composable
@@ -36,18 +35,26 @@ fun FoodScreen(
     strings: CalorieCoreStrings,
     onSelectedDateTimeChange: (Long) -> Unit,
     onSaveFoodEntry: (FoodEntry) -> Unit,
-    onRemoveFoodEntry: (Long) -> Unit
+    onRemoveFoodEntry: (Long) -> Unit,
+    openEditorOnStart: Boolean = false,
+    onEditorOpenChange: (Boolean) -> Unit = {}
 ) {
-    val mealsForPickedDay = logbook.foodRowsForPickedDay()
-    val pickedDayNutrition = logbook.pickedDayReport().nutrition
+    val report = remember(logbook) { logbook.pickedDayReport() }
+    val mealsForPickedDay = report.foodEntries
+    val pickedDayNutrition = report.nutrition
+    val target = remember(report.profile, report.activities, logbook.settings.nutritionGoal) {
+        macroTargetFor(report.profile, report.activities, logbook.settings.nutritionGoal)
+    }
     val editor = rememberFoodEditorState(logbook.selectedDateTime)
     val context = LocalContext.current
     val barcodeReader = remember { FoodBarcodeReader(context) }
     val foodFacts = remember { FoodFactsClient() }
     val foodScreenScope = rememberCoroutineScope()
 
-    var lookupBusy by rememberSaveable { mutableStateOf(false) }
-    var isEditorOpen by rememberSaveable { mutableStateOf(false) }
+    var lookupBusy by remember { mutableStateOf(false) }
+    var lookupJob by remember { mutableStateOf<Job?>(null) }
+    var isEditorOpen by rememberSaveable { mutableStateOf(openEditorOnStart) }
+    var foodMethod by rememberSaveable { mutableStateOf<FoodAddMethod?>(null) }
     var deleteMealId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     if (deleteMealId != null) {
@@ -80,7 +87,8 @@ fun FoodScreen(
     }
 
     fun fetchScannedFood(code: String) {
-        foodScreenScope.launch {
+        if (lookupBusy) return
+        lookupJob = foodScreenScope.launch {
             lookupBusy = true
             editor.lookupNote = null
             foodFacts.lookupBarcode(code)
@@ -91,6 +99,7 @@ fun FoodScreen(
                         strings.productLoaded
                     }
                     editor.useLookupProduct(food, loadedMessage)
+                    foodMethod = FoodAddMethod.Custom
                 }
                 .onFailure { error ->
                     editor.lookupNote = when (error.message) {
@@ -104,6 +113,7 @@ fun FoodScreen(
     }
 
     fun searchOffShelf() {
+        if (lookupBusy) return
         val typedFood = editor.draft.offSearchText.trim()
         if (typedFood.length < 2) {
             editor.offShelf = emptyList()
@@ -111,8 +121,9 @@ fun FoodScreen(
             editor.lookupNote = if (typedFood.isEmpty()) null else strings.invalidSearch
             return
         }
-        foodScreenScope.launch {
+        lookupJob = foodScreenScope.launch {
             lookupBusy = true
+            editor.offShelf = emptyList()
             editor.hasSearchedOff = true
             editor.lookupNote = null
             foodFacts.searchFoods(typedFood)
@@ -134,18 +145,66 @@ fun FoodScreen(
     fun scanBarcode() {
         barcodeReader.scan(
             onBarcodeDetected = { scannedCode ->
-                editor.updateBarcode(scannedCode)
-                editor.lookupNote = strings.barcodeScanned
-                fetchScannedFood(scannedCode)
+                if (isEditorOpen && foodMethod == FoodAddMethod.Barcode) {
+                    editor.updateBarcode(scannedCode)
+                    editor.lookupNote = strings.barcodeScanned
+                    fetchScannedFood(scannedCode)
+                }
             },
-            onUserCanceled = { editor.lookupNote = strings.scanCanceled },
-            onScannerFailure = { editor.lookupNote = strings.scannerUnavailable }
+            onUserCanceled = {
+                if (isEditorOpen && foodMethod == FoodAddMethod.Barcode) editor.lookupNote = strings.scanCanceled
+            },
+            onScannerFailure = {
+                if (isEditorOpen && foodMethod == FoodAddMethod.Barcode) editor.lookupNote = strings.scannerUnavailable
+            }
         )
     }
 
+    if (isEditorOpen) {
+        EditorPage(
+            strings = strings,
+            hasChanges = editor.draft != FoodDraft(mealLoggedAt = logbook.selectedDateTime),
+            onClose = {
+                lookupJob?.cancel()
+                lookupBusy = false
+                editor.clear(logbook.selectedDateTime)
+                isEditorOpen = false
+            },
+            onEditorOpenChange = onEditorOpenChange,
+            scrollKey = foodMethod
+        ) { cancel ->
+            FoodEntryEditor(
+                editor = editor, strings = strings, lookupBusy = lookupBusy,
+                method = foodMethod,
+                onMethodChange = {
+                    lookupJob?.cancel()
+                    lookupBusy = false
+                    editor.lookupNote = null
+                    foodMethod = it
+                },
+                onScanBarcode = ::scanBarcode,
+                onLookupBarcode = { fetchScannedFood(editor.draft.barcode) },
+                onSearchFood = ::searchOffShelf,
+                onSelectProduct = {
+                    lookupJob?.cancel()
+                    lookupBusy = false
+                    editor.useLookupProduct(it, strings.productLoaded)
+                    foodMethod = FoodAddMethod.Custom
+                },
+                onSaveFoodEntry = { entry ->
+                    onSaveFoodEntry(entry)
+                    editor.clear(logbook.selectedDateTime)
+                    isEditorOpen = false
+                },
+                onClose = cancel
+            )
+        }
+        return
+    }
+
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(UiSpacing.page),
+        verticalArrangement = Arrangement.spacedBy(UiSpacing.section)
     ) {
         item { ScreenName(title = strings.foodTitle) }
         item {
@@ -163,46 +222,32 @@ fun FoodScreen(
         item {
             FoodMacroSummary(
                 nutrition = pickedDayNutrition,
+                target = target,
                 hasMissingMacros = mealsForPickedDay.any {
                     !it.proteinKnown || !it.carbsKnown || !it.fatKnown
                 },
                 strings = strings
             )
         }
-        if (!isEditorOpen) {
-            item {
-                SolidActionButton(
-                    text = strings.addMeal,
-                    onClick = {
-                        editor.clear(logbook.selectedDateTime)
-                        isEditorOpen = true
-                    }
-                )
-            }
-        } else {
-            item {
-                FoodEntryEditor(
-                    editor = editor,
-                    strings = strings,
-                    lookupBusy = lookupBusy,
-                    selectedDateTime = logbook.selectedDateTime,
-                    onScanBarcode = ::scanBarcode,
-                    onLookupBarcode = { fetchScannedFood(editor.draft.barcode) },
-                    onSearchFood = ::searchOffShelf,
-                    onSaveFoodEntry = onSaveFoodEntry,
-                    onClose = { isEditorOpen = false }
-                )
-            }
+        item {
+            SolidActionButton(
+                text = strings.addMeal,
+                onClick = {
+                    editor.clear(logbook.selectedDateTime)
+                    foodMethod = null
+                    isEditorOpen = true
+                }
+            )
         }
         mealRows(
             meals = mealsForPickedDay,
             strings = strings,
             onEdit = { entry ->
                 editor.edit(entry)
+                foodMethod = FoodAddMethod.Custom
                 isEditorOpen = true
             },
             onRemove = { entry -> deleteMealId = entry.id }
         )
-        item { Spacer(modifier = Modifier.height(54.dp)) }
     }
 }

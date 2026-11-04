@@ -1,13 +1,20 @@
 package app.caloriecore.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
@@ -23,25 +30,41 @@ fun BottomDock(
     tabLabel: (CalorieCoreTab) -> String,
     onSelect: (CalorieCoreTab) -> Unit
 ) {
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface
-    ) {
-        CalorieCoreTab.entries.sortedBy { it.navSlot }.forEach { tab ->
-            val selected = currentTab == tab
-            NavigationBarItem(
-                selected = selected,
-                onClick = { onSelect(tab) },
-                icon = { DockGlyph(tab = tab, selected = selected) },
-                label = {
-                    Text(
-                        text = tabLabel(tab),
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+    val largeText = LocalDensity.current.fontScale > 1.3f
+    val tabs = CalorieCoreTab.entries.sortedBy { it.navSlot }
+    val rows = if (largeText) tabs.chunked(3) else listOf(tabs)
+
+    Column(Modifier.background(MaterialTheme.colorScheme.surface).navigationBarsPadding()) {
+        rows.forEach { row ->
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp,
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            ) {
+                row.forEach { tab ->
+                    val selected = currentTab == tab
+                    NavigationBarItem(
+                        selected = selected,
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary
+                        ),
+                        onClick = { onSelect(tab) },
+                        icon = { DockGlyph(tab = tab, selected = selected) },
+                        label = {
+                            Text(
+                                text = tabLabel(tab),
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                                maxLines = 2,
+                                textAlign = TextAlign.Center,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        alwaysShowLabel = true
                     )
-                },
-                alwaysShowLabel = true
-            )
+                }
+            }
         }
     }
 }
@@ -49,7 +72,7 @@ fun BottomDock(
 @Composable
 private fun DockGlyph(tab: CalorieCoreTab, selected: Boolean) {
     val color = if (selected) {
-        MaterialTheme.colorScheme.onSecondaryContainer
+        MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }

@@ -50,7 +50,11 @@ internal class FoodEditorState internal constructor(
         get() = draft.mealBeingEditedId != null
 
     val canSave: Boolean
-        get() = draft.name.isNotBlank() && draft.kcal.isNotBlank()
+        get() = draft.name.isNotBlank() && (draft.grams.toIntOrNull() ?: 0) > 0 &&
+            (draft.kcal.toIntOrNull() ?: -1) >= 0 &&
+            listOf(draft.protein, draft.carbs, draft.fat).all { text ->
+                text.isBlank() || text.toDoubleOrNull()?.let { it.isFinite() && it >= 0 } == true
+            }
 
     fun followSelectedMoment(selectedDateTime: Long) {
         if (draft.mealBeingEditedId == null) changeLoggedAt(selectedDateTime)

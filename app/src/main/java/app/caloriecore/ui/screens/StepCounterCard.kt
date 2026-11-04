@@ -5,13 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
+import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.model.PhoneStepState
 import app.caloriecore.ui.model.PhoneStepStatus
 import app.caloriecore.ui.text.CalorieCoreStrings
-import app.caloriecore.ui.theme.GymGreen
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 fun StepCounterCard(
@@ -27,18 +26,8 @@ fun StepCounterCard(
     }
 
     LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = strings.steps,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = state.steps.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = GymGreen,
-                fontWeight = FontWeight.Bold
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
+            ShelfHeader(strings.steps, state.steps.toString())
             if (detail != null) {
                 Text(
                     text = detail,

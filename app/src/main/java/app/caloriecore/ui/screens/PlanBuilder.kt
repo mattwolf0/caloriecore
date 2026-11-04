@@ -11,11 +11,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.EditorActions
+import app.caloriecore.ui.components.InputRow
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.MiniBadge
 import app.caloriecore.ui.components.NumberInput
+import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.components.keepLogNumberText
@@ -24,6 +25,7 @@ import app.caloriecore.ui.model.TrainingPlan
 import app.caloriecore.ui.model.TrainingPlanExercise
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 internal fun PlanBuilder(
@@ -32,71 +34,80 @@ internal fun PlanBuilder(
     onSavePlan: (TrainingPlan) -> Unit,
     onClose: () -> Unit
 ) {
-    LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ShelfHeader(if (draft.isEditing) strings.editPlan else strings.createPlan)
+    Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+        ScreenName(if (draft.isEditing) strings.editPlan else strings.createPlan)
+        LogCard {
             OutlinedTextField(
                 value = draft.planNameInput,
                 onValueChange = { draft.planNameInput = it },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(strings.planName) },
-                singleLine = true
+                shape = MaterialTheme.shapes.small, singleLine = true
             )
-            if (draft.planScratchpad.isNotEmpty()) {
-                ShelfHeader(strings.planPreview, "${draft.planScratchpad.size} ${strings.exercises}")
-                draft.planScratchpad.forEach { exercise ->
-                    TrainingPlanExerciseRow(
-                        exercise = exercise,
-                        strings = strings,
-                        onDelete = { draft.removeExercise(exercise.id) }
-                    )
+        }
+        if (draft.planExercises.isNotEmpty()) {
+            LogCard {
+                Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
+                    ShelfHeader(strings.planPreview, "${draft.planExercises.size} ${strings.exercises}")
+                    draft.planExercises.forEach { exercise ->
+                        TrainingPlanExerciseRow(
+                            exercise = exercise,
+                            strings = strings,
+                            onDelete = { draft.removeExercise(exercise.id) }
+                        )
+                    }
                 }
             }
-            ShelfHeader(strings.addPlanExercise)
-            OutlinedTextField(
-                value = draft.exerciseNameInput,
-                onValueChange = { draft.exerciseNameInput = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(strings.planExerciseName) },
-                singleLine = true
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberInput(
-                    strings.sets,
-                    draft.plannedSetCountInput,
-                    { draft.plannedSetCountInput = keepLogNumberText(it) },
-                    Modifier.weight(1f)
+        }
+        LogCard {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
+                ShelfHeader(strings.addPlanExercise)
+                OutlinedTextField(
+                    value = draft.exerciseNameInput,
+                    onValueChange = { draft.exerciseNameInput = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(strings.planExerciseName) },
+                    shape = MaterialTheme.shapes.small, singleLine = true
                 )
+                InputRow {
+                    NumberInput(
+                        label = strings.sets,
+                        numberText = draft.plannedSetCountInput,
+                        onValueChange = { draft.plannedSetCountInput = keepLogNumberText(it) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    NumberInput(
+                        label = strings.reps,
+                        numberText = draft.plannedRepsInput,
+                        onValueChange = { draft.plannedRepsInput = keepLogNumberText(it) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 NumberInput(
-                    strings.reps,
-                    draft.plannedRepsInput,
-                    { draft.plannedRepsInput = keepLogNumberText(it) },
-                    Modifier.weight(1f)
+                    label = strings.load,
+                    numberText = draft.plannedLoadInput,
+                    onValueChange = { draft.plannedLoadInput = keepLogNumberText(it, true) },
+                    suffix = "kg",
+                    allowDecimal = true
                 )
-                NumberInput(
-                    strings.load,
-                    draft.plannedLoadInput,
-                    { draft.plannedLoadInput = keepLogNumberText(it, true) },
-                    Modifier.weight(1f),
-                    "kg",
-                    true
-                )
-            }
-            SolidActionButton(
-                text = strings.addThisExercise,
-                enabled = draft.exerciseNameInput.isNotBlank(),
-                onClick = draft::addExercise
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(strings.exerciseInputHint, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 SolidActionButton(
-                    text = if (draft.isEditing) strings.updatePlan else strings.addPlan,
-                    enabled = draft.canSave,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSavePlan(draft.buildPlan()) }
+                    text = strings.addThisExercise,
+                    enabled = draft.canAddExercise,
+                    onClick = draft::addExercise
                 )
-                TextButton(onClick = onClose) { Text(strings.close) }
             }
         }
+        if (!draft.canSave) Text(strings.planSaveHint, style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        EditorActions(
+            saveText = if (draft.isEditing) strings.updatePlan else strings.addPlan,
+            canSave = draft.canSave,
+            strings = strings,
+            onSave = { onSavePlan(draft.buildPlan()) },
+            onCancel = onClose
+        )
     }
 }
 
@@ -111,9 +122,9 @@ private fun TrainingPlanExerciseRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(exercise.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)) {
+            Text(exercise.name, style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(UiSpacing.small)) {
                 exercise.plannedSets
                     .ifEmpty { listOf(PlannedSetBlock(setCount = 0, reps = 0, weightKg = 0.0)) }
                     .forEach { planned ->

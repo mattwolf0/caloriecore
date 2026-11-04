@@ -18,33 +18,50 @@ internal class WorkoutDraft internal constructor(
     private val startedPlanIdState: MutableState<Long?>,
     private val workoutLoggedAtState: MutableState<Long>,
     private val workoutTitleInputState: MutableState<String>,
-    private val setLogScratchpadState: MutableState<List<LoggedExercise>>
+    private val workoutExercisesState: MutableState<List<LoggedExercise>>,
+    private val isNewWorkoutState: MutableState<Boolean> = mutableStateOf(false)
 ) {
     var openWorkoutId by openWorkoutIdState
     var startedPlanId by startedPlanIdState
     var workoutLoggedAt by workoutLoggedAtState
     var workoutTitleInput by workoutTitleInputState
-    var setLogScratchpad by setLogScratchpadState
+    var workoutExercises by workoutExercisesState
+    private var isNewWorkout by isNewWorkoutState
 
     val isOpen: Boolean
-        get() = openWorkoutId != null || startedPlanId != null || setLogScratchpad.isNotEmpty()
+        get() = isNewWorkout || openWorkoutId != null || startedPlanId != null || workoutExercises.isNotEmpty()
 
     val isEditing: Boolean
         get() = openWorkoutId != null
 
     val canSave: Boolean
-        get() = workoutTitleInput.isNotBlank() && setLogScratchpad.isNotEmpty()
+        get() = workoutTitleInput.isNotBlank() && workoutExercises.any { it.sets.isNotEmpty() } &&
+            workoutExercises.all { exercise ->
+                exercise.sets.all { it.reps in 1..1000 && it.weightKg in 0.0..1000.0 }
+            }
 
     fun followSelectedMoment(selectedDateTime: Long) {
         if (openWorkoutId == null) workoutLoggedAt = selectedDateTime
     }
 
     fun close(selectedDateTime: Long) {
+        isNewWorkout = false
         openWorkoutId = null
         startedPlanId = null
         workoutLoggedAt = selectedDateTime
         workoutTitleInput = ""
-        setLogScratchpad = emptyList()
+        workoutExercises = emptyList()
+    }
+
+    fun startNewWorkout(selectedDateTime: Long, title: String) {
+        close(selectedDateTime)
+        isNewWorkout = true
+        workoutTitleInput = title
+    }
+
+    fun addExercise(name: String) {
+        if (name.isBlank()) return
+        workoutExercises = workoutExercises + LoggedExercise(name = name.trim(), position = workoutExercises.size)
     }
 
     fun startFromPlan(plan: TrainingPlan, selectedDateTime: Long) {
@@ -54,7 +71,7 @@ internal class WorkoutDraft internal constructor(
         startedPlanId = plan.id
         workoutLoggedAt = startSheet.loggedAt
         workoutTitleInput = startSheet.title
-        setLogScratchpad = startSheet.exercises
+        workoutExercises = startSheet.exercises
     }
 
     fun reopen(session: TrainingSession) {
@@ -62,15 +79,15 @@ internal class WorkoutDraft internal constructor(
         startedPlanId = session.programId
         workoutLoggedAt = session.loggedAt
         workoutTitleInput = session.title
-        setLogScratchpad = session.exercises
+        workoutExercises = session.exercises
     }
 
     fun updateExercise(next: LoggedExercise) {
-        setLogScratchpad = setLogScratchpad.map { if (it.id == next.id) next else it }
+        workoutExercises = workoutExercises.map { if (it.id == next.id) next else it }
     }
 
     fun removeExercise(exerciseId: Long) {
-        setLogScratchpad = setLogScratchpad.filterNot { it.id == exerciseId }
+        workoutExercises = workoutExercises.filterNot { it.id == exerciseId }
     }
 
     fun buildSession(): TrainingSession {
@@ -80,7 +97,7 @@ internal class WorkoutDraft internal constructor(
             programId = startedPlanId,
             title = workoutTitleInput.trim(),
             loggedAt = workoutLoggedAt,
-            exercises = setLogScratchpad.mapIndexed { index, exercise ->
+            exercises = workoutExercises.filter { it.sets.isNotEmpty() }.mapIndexed { index, exercise ->
                 exercise.copy(
                     sessionId = sessionId,
                     position = index,
@@ -97,7 +114,8 @@ internal fun rememberWorkoutDraft(selectedDateTime: Long): WorkoutDraft {
     val startedPlanId = rememberSaveable { mutableStateOf<Long?>(null) }
     val workoutLoggedAt = rememberSaveable { mutableStateOf(selectedDateTime) }
     val workoutTitleInput = rememberSaveable { mutableStateOf("") }
-    val setLogScratchpad = remember { mutableStateOf(emptyList<LoggedExercise>()) }
+    val workoutExercises = remember { mutableStateOf(emptyList<LoggedExercise>()) }
+    val isNewWorkout = rememberSaveable { mutableStateOf(false) }
 
     return remember {
         WorkoutDraft(
@@ -105,7 +123,8 @@ internal fun rememberWorkoutDraft(selectedDateTime: Long): WorkoutDraft {
             startedPlanId,
             workoutLoggedAt,
             workoutTitleInput,
-            setLogScratchpad
+            workoutExercises,
+            isNewWorkout
         )
     }
 }

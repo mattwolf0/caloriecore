@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.InputRow
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.NumberInput
 import app.caloriecore.ui.components.ScreenName
@@ -23,6 +22,7 @@ import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.model.BodySnapshot
 import app.caloriecore.ui.model.Sex
 import app.caloriecore.ui.text.CalorieCoreStrings
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 fun ProfileSetupScreen(
@@ -35,24 +35,24 @@ fun ProfileSetupScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(UiSpacing.page),
+        verticalArrangement = Arrangement.spacedBy(UiSpacing.section)
     ) {
         item { ScreenName(title = strings.profileSetupTitle) }
         item {
             Text(
                 text = strings.profileSetupIntro,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
         item {
             LogCard {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.section)) {
                     Text(
                         text = strings.profileData,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = strings.profileSetupRequired,
@@ -65,7 +65,7 @@ fun ProfileSetupScreen(
                     )
                     Row(
                         modifier = Modifier.selectableGroup(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(UiSpacing.small)
                     ) {
                         Sex.entries.forEach { sex ->
                             FilterChip(
@@ -75,7 +75,7 @@ fun ProfileSetupScreen(
                             )
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InputRow {
                         NumberInput(
                             label = "${strings.age} *",
                             numberText = setup.ageInput,
@@ -92,7 +92,7 @@ fun ProfileSetupScreen(
                             isError = setup.heightInvalid
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InputRow {
                         NumberInput(
                             label = "${strings.weight} *",
                             numberText = setup.weightInput,
@@ -132,6 +132,5 @@ fun ProfileSetupScreen(
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(20.dp)) }
     }
 }

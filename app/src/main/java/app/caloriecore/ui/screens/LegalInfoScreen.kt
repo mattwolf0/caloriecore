@@ -4,22 +4,20 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.ScreenName
 import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.text.CalorieCoreStrings
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 internal fun LegalInfoScreen(strings: CalorieCoreStrings, onBack: () -> Unit) {
@@ -29,8 +27,8 @@ internal fun LegalInfoScreen(strings: CalorieCoreStrings, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
 
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(UiSpacing.page),
+        verticalArrangement = Arrangement.spacedBy(UiSpacing.section)
     ) {
         item {
             TextButton(onClick = onBack) {
@@ -66,7 +64,6 @@ internal fun LegalInfoScreen(strings: CalorieCoreStrings, onBack: () -> Unit) {
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(54.dp)) }
     }
 }
 
@@ -77,11 +74,11 @@ private fun LegalNoticeCard(
     onOpen: () -> Unit
 ) {
     LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
             Text(
                 text = notice.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = notice.terms,
@@ -94,7 +91,7 @@ private fun LegalNoticeCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            TextButton(onClick = onOpen) {
+            OutlinedButton(onClick = onOpen, shape = MaterialTheme.shapes.small) {
                 Text(openText)
             }
         }

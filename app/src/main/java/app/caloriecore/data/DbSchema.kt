@@ -9,6 +9,7 @@ internal fun createTables(db: SQLiteDatabase) {
             id INTEGER PRIMARY KEY CHECK (id = 1),
             language TEXT NOT NULL,
             theme_mode TEXT NOT NULL,
+            nutrition_goal TEXT NOT NULL,
             profile_setup_complete INTEGER NOT NULL DEFAULT 0
         )
         """.trimIndent()

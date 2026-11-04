@@ -11,6 +11,7 @@ import app.caloriecore.ui.model.FoodEntry
 import app.caloriecore.ui.model.Logbook
 import app.caloriecore.ui.model.LoggedExercise
 import app.caloriecore.ui.model.LoggedSet
+import app.caloriecore.ui.model.NutritionGoal
 import app.caloriecore.ui.model.PlannedSetBlock
 import app.caloriecore.ui.model.TrainingPlan
 import app.caloriecore.ui.model.TrainingPlanExercise
@@ -120,7 +121,10 @@ class LogbookRepositoryInstrumentedTest {
                     activityEntries = listOf(cycling),
                     trainingSessions = listOf(pressSession),
                     trainingPlans = listOf(mondayPressPlan),
-                    settings = UserPreferences(profileSetupComplete = true)
+                    settings = UserPreferences(
+                        nutritionGoal = NutritionGoal.LoseFat,
+                        profileSetupComplete = true
+                    )
                 )
             )
 
@@ -128,6 +132,7 @@ class LogbookRepositoryInstrumentedTest {
 
             assertEquals(UiLanguage.System, savedLogbook.settings.language)
             assertEquals(UiThemeMode.System, savedLogbook.settings.themeMode)
+            assertEquals(NutritionGoal.LoseFat, savedLogbook.settings.nutritionGoal)
             assertTrue(savedLogbook.settings.profileSetupComplete)
             assertEquals(1, savedLogbook.bodyHistory.size)
             assertEquals(18.0, savedLogbook.bodyHistory.first().bodyFatPercent ?: 0.0, 0.0)
@@ -222,6 +227,7 @@ class LogbookRepositoryInstrumentedTest {
 
             assertEquals(UiLanguage.System, migratedLogbook.settings.language)
             assertEquals(UiThemeMode.System, migratedLogbook.settings.themeMode)
+            assertEquals(NutritionGoal.MaintainWeight, migratedLogbook.settings.nutritionGoal)
             assertTrue(migratedLogbook.settings.profileSetupComplete)
             assertTrue(migratedLogbook.foodEntries.single().proteinKnown)
             assertTrue(migratedLogbook.foodEntries.single().carbsKnown)

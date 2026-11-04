@@ -2,8 +2,8 @@ package app.caloriecore.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -11,17 +11,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.components.InputRow
 import app.caloriecore.ui.components.LogCard
 import app.caloriecore.ui.components.MiniBadge
 import app.caloriecore.ui.components.ShelfHeader
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.FoodEntry
-import app.caloriecore.ui.model.logMomentText
+import app.caloriecore.ui.model.logTimeText
 import app.caloriecore.ui.text.CalorieCoreStrings
 import app.caloriecore.ui.theme.FoodAmber
 import app.caloriecore.ui.theme.GymGreen
+import app.caloriecore.ui.theme.UiSpacing
 import app.caloriecore.ui.theme.WarningRed
 
 internal fun LazyListScope.mealRows(
@@ -30,10 +30,10 @@ internal fun LazyListScope.mealRows(
     onEdit: (FoodEntry) -> Unit,
     onRemove: (FoodEntry) -> Unit
 ) {
-    item { ShelfHeader(strings.todaysMeals, "${meals.size} ${strings.items}") }
     if (meals.isEmpty()) {
         item { EmptyMealCard(strings.noEntries) }
     } else {
+        item { ShelfHeader(strings.todaysMeals, "${meals.size} ${strings.items}") }
         items(meals, key = { it.id }) { entry ->
             MealLogRow(
                 entry = entry,
@@ -45,24 +45,20 @@ internal fun LazyListScope.mealRows(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MealLogRow(entry: FoodEntry, strings: CalorieCoreStrings, onEdit: () -> Unit, onRemove: () -> Unit) {
     LogCard {
-        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = entry.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = "${logMomentText(entry.loggedAt)} | ${entry.servingGrams} g | ${CalorieCoreFormatter.kcal(entry.calories)}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Row {
-                    TextButton(onClick = onEdit) { Text(strings.edit) }
-                    TextButton(onClick = onRemove) { Text(strings.delete) }
-                }
+        Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.content)) {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)) {
+                Text(text = entry.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "${logTimeText(entry.loggedAt)} · ${entry.servingGrams} g · ${entry.calories} kcal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(UiSpacing.small), verticalArrangement = Arrangement.spacedBy(UiSpacing.small)) {
                 MiniBadge("P ${macroValue(entry.proteinGrams, entry.proteinKnown)}", color = GymGreen)
                 MiniBadge("C ${macroValue(entry.carbGrams, entry.carbsKnown)}", color = FoodAmber)
                 MiniBadge("F ${macroValue(entry.fatGrams, entry.fatKnown)}", color = WarningRed)
@@ -73,6 +69,10 @@ private fun MealLogRow(entry: FoodEntry, strings: CalorieCoreStrings, onEdit: ()
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            InputRow {
+                TextButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text(strings.edit) }
+                TextButton(onClick = onRemove, modifier = Modifier.weight(1f)) { Text(strings.delete) }
             }
         }
     }

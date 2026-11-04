@@ -2,19 +2,17 @@ package app.caloriecore.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -24,89 +22,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.caloriecore.ui.theme.UiSpacing
 
 @Composable
 fun CalorieCoreBackdrop(content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         content()
     }
 }
 
 @Composable
 fun ScreenName(title: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
+    Text(
+        title,
+        modifier = modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onBackground
+    )
+}
+
+@Composable
+fun MetricValue(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleLarge)
     }
 }
 
 @Composable
-fun StatTile(
-    label: String,
-    metricText: String,
-    detail: String,
+fun LogCard(
     modifier: Modifier = Modifier,
-    accent: Color = MaterialTheme.colorScheme.primary
+    padding: Dp = UiSpacing.card,
+    content: @Composable () -> Unit
 ) {
-    LogCard(modifier = modifier) {
-        Row(verticalAlignment = Alignment.Top) {
-            Box(
-                modifier = Modifier
-                    .size(7.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(accent)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = metricText,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = detail,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun LogCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(8.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+        shape = MaterialTheme.shapes.large
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                .padding(10.dp)
-        ) {
+        Box(Modifier.fillMaxWidth().padding(padding)) {
             content()
         }
     }
@@ -116,6 +75,7 @@ fun LogCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 fun ClickableLogCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    padding: Dp = UiSpacing.card,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -123,14 +83,11 @@ fun ClickableLogCard(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        shape = RoundedCornerShape(8.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+        shape = MaterialTheme.shapes.large
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .padding(horizontal = 10.dp),
+            Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(padding),
             contentAlignment = Alignment.CenterStart
         ) {
             content()
@@ -140,24 +97,25 @@ fun ClickableLogCard(
 
 @Composable
 fun ShelfHeader(title: String, trailing: String? = null, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
-        if (trailing != null) {
-            Text(
-                text = trailing,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold
-            )
+    val largeText = LocalDensity.current.fontScale > 1.3f
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        if (trailing != null && (maxWidth < 300.dp || largeText)) {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpacing.tight)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(trailing, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title, Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (trailing != null) {
+                    Spacer(Modifier.width(UiSpacing.content))
+                    Text(trailing, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
@@ -165,17 +123,10 @@ fun ShelfHeader(title: String, trailing: String? = null, modifier: Modifier = Mo
 @Composable
 fun MiniBadge(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.primary) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(5.dp))
-            .background(color.copy(alpha = 0.10f))
-            .border(1.dp, color.copy(alpha = 0.22f), RoundedCornerShape(5.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+        modifier.clip(MaterialTheme.shapes.extraSmall)
+            .background(color.copy(alpha = 0.1f))
+            .padding(horizontal = UiSpacing.small, vertical = UiSpacing.tight)
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = color,
-            fontWeight = FontWeight.SemiBold
-        )
+        Text(text, style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
