@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.caloriecore.ui.components.SoftActionButton
+import app.caloriecore.ui.components.SolidActionButton
 import app.caloriecore.ui.format.CalorieCoreFormatter
 import app.caloriecore.ui.model.FoodProduct
 import app.caloriecore.ui.text.CalorieCoreStrings
@@ -38,6 +38,7 @@ import app.caloriecore.ui.theme.LineIcons
 internal fun FoodLookupBox(
     editor: FoodEditorState,
     strings: CalorieCoreStrings,
+    page: FoodAddPage,
     lookupBusy: Boolean,
     onScanBarcode: () -> Unit,
     onLookupBarcode: () -> Unit,
@@ -49,28 +50,22 @@ internal fun FoodLookupBox(
     val canLookupBarcode = draft.barcode.isNotBlank() && !lookupBusy
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedTextField(
-            value = draft.offSearchText,
-            onValueChange = editor::updateSearchText,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(strings.searchFood) },
-            trailingIcon = {
-                IconButton(enabled = canSearch, onClick = onSearchFood) {
-                    Icon(Icons.Rounded.Search, contentDescription = strings.searchFood)
-                }
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { if (canSearch) onSearchFood() })
+        Text(
+            text = if (page == FoodAddPage.Barcode) strings.barcodeFoodHint else strings.searchFoodHint,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        if (page == FoodAddPage.Barcode) {
+            SolidActionButton(
+                text = strings.scanBarcode,
+                icon = LineIcons.Scan,
+                enabled = !lookupBusy,
+                onClick = onScanBarcode
+            )
             OutlinedTextField(
                 value = draft.barcode,
                 onValueChange = editor::updateBarcode,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 label = { Text(strings.barcode) },
                 trailingIcon = {
                     IconButton(enabled = canLookupBarcode, onClick = onLookupBarcode) {
@@ -81,16 +76,29 @@ internal fun FoodLookupBox(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { if (canLookupBarcode) onLookupBarcode() })
             )
-            SoftActionButton(
-                text = strings.scanBarcode,
-                icon = LineIcons.Scan,
-                enabled = !lookupBusy,
-                onClick = onScanBarcode,
-                modifier = Modifier.weight(1f).heightIn(min = 56.dp)
+        } else {
+            OutlinedTextField(
+                value = draft.offSearchText,
+                onValueChange = editor::updateSearchText,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(strings.foodSearchText) },
+                trailingIcon = {
+                    IconButton(enabled = canSearch, onClick = onSearchFood) {
+                        Icon(Icons.Rounded.Search, contentDescription = strings.searchFood)
+                    }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { if (canSearch) onSearchFood() })
             )
         }
         if (lookupBusy) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth().clip(CircleShape))
+            Text(
+                text = strings.lookingUp,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         editor.lookupNote?.let { message ->
             Text(
@@ -99,7 +107,7 @@ internal fun FoodLookupBox(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if (editor.offShelf.isNotEmpty()) {
+        if (page == FoodAddPage.Search && editor.offShelf.isNotEmpty() && !lookupBusy) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -126,7 +134,7 @@ internal fun FoodLookupBox(
                     }
                 }
             }
-        } else if (editor.hasSearchedOff && editor.lookupNote == null) {
+        } else if (page == FoodAddPage.Search && editor.hasSearchedOff && editor.lookupNote == null && !lookupBusy) {
             Text(
                 text = strings.noFoodSearchResults,
                 style = MaterialTheme.typography.bodySmall,

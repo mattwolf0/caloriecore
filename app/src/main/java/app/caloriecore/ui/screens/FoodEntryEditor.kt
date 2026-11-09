@@ -22,35 +22,19 @@ import app.caloriecore.ui.text.CalorieCoreStrings
 internal fun FoodEntryEditor(
     editor: FoodEditorState,
     strings: CalorieCoreStrings,
-    lookupBusy: Boolean,
     selectedDateTime: Long,
-    onScanBarcode: () -> Unit,
-    onLookupBarcode: () -> Unit,
-    onSearchFood: () -> Unit,
     onSaveFoodEntry: (FoodEntry) -> Unit,
     onClose: () -> Unit
 ) {
     val draft = editor.draft
 
-    LogMomentPicker(
-        pickedMillis = draft.mealLoggedAt,
-        onValueChange = editor::changeLoggedAt,
-        dateLabel = strings.date,
-        timeLabel = strings.time,
-        todayText = strings.todayButton,
-        previousDayText = strings.previousDay,
-        nextDayText = strings.nextDay
-    )
-    FoodLookupBox(
-        editor = editor,
-        strings = strings,
-        lookupBusy = lookupBusy,
-        onScanBarcode = onScanBarcode,
-        onLookupBarcode = onLookupBarcode,
-        onSearchFood = onSearchFood,
-        onSelectProduct = { editor.useLookupProduct(it, strings.productLoaded) }
-    )
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    editor.lookupNote?.let { message ->
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
     OutlinedTextField(
         value = draft.name,
         onValueChange = editor::updateFoodName,
@@ -101,6 +85,16 @@ internal fun FoodEntryEditor(
             allowDecimal = true
         )
     }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    LogMomentPicker(
+        pickedMillis = draft.mealLoggedAt,
+        onValueChange = editor::changeLoggedAt,
+        dateLabel = strings.date,
+        timeLabel = strings.time,
+        todayText = strings.todayButton,
+        previousDayText = strings.previousDay,
+        nextDayText = strings.nextDay
+    )
     if (draft.name.isNotBlank() && draft.kcal.isNotBlank() && !editor.canSave) {
         Text(strings.profileSetupInvalid, color = MaterialTheme.colorScheme.error)
     }
